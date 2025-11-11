@@ -81,7 +81,7 @@ router.get(
     const roles = await db
       .selectFrom("user_role")
       .selectAll()
-      .where("user_id", "=", userId)
+      .where("user_id", "=", userId!)
       .execute();
 
     res.json(roles);
@@ -105,7 +105,7 @@ router.get(
     const userRole = await db
       .selectFrom("user_role")
       .select("id")
-      .where("user_id", "=", userId)
+      .where("user_id", "=", userId!)
       .where("role", "=", role)
       .executeTakeFirst();
 
@@ -127,7 +127,7 @@ router.delete(
 
     const deletedRole = await db
       .deleteFrom("user_role")
-      .where("id", "=", id)
+      .where("id", "=", id!)
       .returningAll()
       .executeTakeFirst();
 

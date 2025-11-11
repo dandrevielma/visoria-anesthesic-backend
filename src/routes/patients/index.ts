@@ -53,7 +53,7 @@ router.get(
     const patient = await db
       .selectFrom("patient")
       .selectAll()
-      .where("id", "=", id)
+      .where("id", "=", id!)
       .executeTakeFirst();
 
     if (!patient) {
@@ -76,7 +76,7 @@ router.get(
     const patient = await db
       .selectFrom("patient")
       .selectAll()
-      .where("identification_number", "=", idNumber)
+      .where("identification_number", "=", idNumber!)
       .executeTakeFirst();
 
     if (!patient) {
@@ -162,7 +162,7 @@ router.put(
     const existing = await db
       .selectFrom("patient")
       .select("id")
-      .where("id", "=", id)
+      .where("id", "=", id!)
       .executeTakeFirst();
 
     if (!existing) {
@@ -175,7 +175,7 @@ router.put(
         .selectFrom("patient")
         .select("id")
         .where("identification_number", "=", identification_number)
-        .where("id", "!=", id)
+        .where("id", "!=", id!)
         .executeTakeFirst();
 
       if (duplicate) {
@@ -197,7 +197,7 @@ router.put(
         ...(date_of_birth !== undefined && { date_of_birth: date_of_birth || null }),
         updated_at: new Date(),
       })
-      .where("id", "=", id)
+      .where("id", "=", id!)
       .returningAll()
       .executeTakeFirstOrThrow();
 
@@ -218,7 +218,7 @@ router.delete(
     const hasRecords = await db
       .selectFrom("record")
       .select("id")
-      .where("patient_id", "=", id)
+      .where("patient_id", "=", id!)
       .executeTakeFirst();
 
     if (hasRecords) {
@@ -230,7 +230,7 @@ router.delete(
     // Delete patient
     const deleted = await db
       .deleteFrom("patient")
-      .where("id", "=", id)
+      .where("id", "=", id!)
       .returningAll()
       .executeTakeFirst();
 

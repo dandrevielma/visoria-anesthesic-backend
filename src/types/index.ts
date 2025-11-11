@@ -23,9 +23,9 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
-export type RecordStatus = "completado" | "pendiente";
+export type RecordStatus = "completed" | "pending";
 
-export type RecordType = "quirurgico" | "sedacion";
+export type RecordType = "post_anesthesia" | "pre_anesthesia";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 

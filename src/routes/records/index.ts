@@ -88,7 +88,7 @@ router.get(
         "patient.phone as patient_phone",
         "patient.date_of_birth as patient_date_of_birth",
       ])
-      .where("record.id", "=", id)
+      .where("record.id", "=", id!)
       .executeTakeFirst();
 
     if (!record) {
@@ -99,21 +99,21 @@ router.get(
     const patientForm = await db
       .selectFrom("patient_record_form")
       .selectAll()
-      .where("record_id", "=", id)
+      .where("record_id", "=", id!)
       .executeTakeFirst();
 
     // Get consent if exists
     const consent = await db
       .selectFrom("consent")
       .selectAll()
-      .where("record_id", "=", id)
+      .where("record_id", "=", id!)
       .executeTakeFirst();
 
     // Get doctor evaluation if exists
     const doctorEvaluation = await db
       .selectFrom("doctor_evaluation")
       .selectAll()
-      .where("record_id", "=", id)
+      .where("record_id", "=", id!)
       .executeTakeFirst();
 
     // Get patient files
@@ -127,9 +127,9 @@ router.get(
 
     res.json({
       record,
-      patient_form: patientForm,
-      consent,
-      doctor_evaluation: doctorEvaluation,
+      patient_form: patientForm || null,
+      consent: consent || null,
+      doctor_evaluation: doctorEvaluation || null,
       files,
     });
   })
@@ -157,9 +157,9 @@ router.post(
       });
     }
 
-    if (!["sedacion", "quirurgico"].includes(type)) {
+    if (!["pre_anesthesia", "post_anesthesia"].includes(type)) {
       return res.status(400).json({
-        error: "type must be 'sedacion' or 'quirurgico'",
+        error: "type must be 'pre_anesthesia' or 'post_anesthesia'",
       });
     }
 
@@ -195,7 +195,7 @@ router.post(
       .values({
         patient_id,
         type,
-        status: "pendiente",
+        status: "pending",
         record_number: recordNumber,
         form_link_token: formToken,
         assigned_doctor_id: assigned_doctor_id || null,
@@ -232,7 +232,7 @@ router.put(
     const existing = await db
       .selectFrom("record")
       .select("id")
-      .where("id", "=", id)
+      .where("id", "=", id!)
       .executeTakeFirst();
 
     if (!existing) {
@@ -240,9 +240,9 @@ router.put(
     }
 
     // Validate status if provided
-    if (status && !["pendiente", "completado"].includes(status)) {
+    if (status && !["pending", "completed"].includes(status)) {
       return res.status(400).json({
-        error: "status must be 'pendiente' or 'completado'",
+        error: "Invalid status. Status must be 'pending' or 'completed'",
       });
     }
 
@@ -256,7 +256,7 @@ router.put(
         ...(notes !== undefined && { notes: notes || null }),
         updated_at: new Date(),
       })
-      .where("id", "=", id)
+      .where("id", "=", id!)
       .returningAll()
       .executeTakeFirstOrThrow();
 
@@ -277,7 +277,7 @@ router.delete(
     const hasForm = await db
       .selectFrom("patient_record_form")
       .select("id")
-      .where("record_id", "=", id)
+      .where("record_id", "=", id!)
       .executeTakeFirst();
 
     if (hasForm) {
@@ -290,7 +290,7 @@ router.delete(
     const hasEvaluation = await db
       .selectFrom("doctor_evaluation")
       .select("id")
-      .where("record_id", "=", id)
+      .where("record_id", "=", id!)
       .executeTakeFirst();
 
     if (hasEvaluation) {
@@ -302,7 +302,7 @@ router.delete(
     // Delete record
     const deleted = await db
       .deleteFrom("record")
-      .where("id", "=", id)
+      .where("id", "=", id!)
       .returningAll()
       .executeTakeFirst();
 
