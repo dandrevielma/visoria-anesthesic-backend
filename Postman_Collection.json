@@ -1,0 +1,608 @@
+{
+  "info": {
+    "name": "Pre-Anesthesia API - Complete Workflow",
+    "description": "Complete workflow: Register → Login → Create Patient → Create Record → Generate Form Link → Fill Forms",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "patientId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "recordId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "formToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Sign Up (Register)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.user && response.user.id) {",
+                  "        pm.collectionVariables.set('userId', response.user.id);",
+                  "        console.log('User ID saved:', response.user.id);",
+                  "    }",
+                  "    if (response.session && response.session.token) {",
+                  "        pm.collectionVariables.set('authToken', response.session.token);",
+                  "        console.log('Auth token saved');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"doctor@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"name\": \"Dr. John Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sign-up/email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "sign-up", "email"]
+            },
+            "description": "Register a new user account. Email verification is required but can be bypassed in development."
+          },
+          "response": []
+        },
+        {
+          "name": "Sign In (Login)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.user && response.user.id) {",
+                  "        pm.collectionVariables.set('userId', response.user.id);",
+                  "        console.log('User ID saved:', response.user.id);",
+                  "    }",
+                  "    if (response.session && response.session.token) {",
+                  "        pm.collectionVariables.set('authToken', response.session.token);",
+                  "        console.log('Auth token saved');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"doctor@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sign-in/email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "sign-in", "email"]
+            },
+            "description": "Login with email and password. Returns session token stored in cookies and response."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Session (Current User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/get-session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "get-session"]
+            },
+            "description": "Get current authenticated user session information."
+          },
+          "response": []
+        },
+        {
+          "name": "Sign Out (Logout)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sign-out",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "sign-out"]
+            },
+            "description": "Logout and invalidate current session."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. User Roles",
+      "item": [
+        {
+          "name": "Assign Role to User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{userId}}\",\n  \"role\": \"doctor\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles"]
+            },
+            "description": "Assign a role to a user. Roles: 'admin', 'doctor', 'nurse'"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "{{userId}}"]
+            },
+            "description": "Get all roles assigned to a specific user."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Patients",
+      "item": [
+        {
+          "name": "Create Patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.id) {",
+                  "        pm.collectionVariables.set('patientId', response.id);",
+                  "        console.log('Patient ID saved:', response.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identification_number\": \"12345678\",\n  \"first_name\": \"Maria\",\n  \"last_name\": \"Garcia\",\n  \"email\": \"maria.garcia@example.com\",\n  \"phone\": \"+1234567890\",\n  \"date_of_birth\": \"1985-06-15\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "patients"]
+            },
+            "description": "Create a new patient. identification_number must be unique."
+          },
+          "response": []
+        },
+        {
+          "name": "List Patients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/patients?limit=50&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "patients"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "search",
+                  "value": "Garcia",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List all patients with optional search parameter."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Patient by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "patients", "{{patientId}}"]
+            },
+            "description": "Get a specific patient by their ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Find Patient by Identification",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/identification/12345678",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "patients", "identification", "12345678"]
+            },
+            "description": "Find a patient by their identification number."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Patient",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Maria\",\n  \"last_name\": \"Garcia Rodriguez\",\n  \"phone\": \"+1234567891\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "patients", "{{patientId}}"]
+            },
+            "description": "Update patient information."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Medical Records",
+      "item": [
+        {
+          "name": "Create Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.id) {",
+                  "        pm.collectionVariables.set('recordId', response.id);",
+                  "        console.log('Record ID saved:', response.id);",
+                  "    }",
+                  "    if (response.form_link_token) {",
+                  "        pm.collectionVariables.set('formToken', response.form_link_token);",
+                  "        console.log('Form token saved:', response.form_link_token);",
+                  "        console.log('Patient form link: http://localhost:3000/form/' + response.form_link_token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": \"{{patientId}}\",\n  \"type\": \"pre_anesthesia\",\n  \"status\": \"pending\",\n  \"scheduled_date\": \"2025-12-01T10:00:00Z\",\n  \"notes\": \"Surgery scheduled for hip replacement\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"]
+            },
+            "description": "Create a new medical record. Auto-generates record number and form link token. Types: 'pre_anesthesia', 'post_anesthesia', 'consultation'"
+          },
+          "response": []
+        },
+        {
+          "name": "List Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records?limit=50&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                },
+                {
+                  "key": "patient_id",
+                  "value": "{{patientId}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List all records with optional filters (status, patient_id, assigned_doctor_id)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Record Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{recordId}}"]
+            },
+            "description": "Get full record details including patient info, forms, consent, doctor evaluation, and files."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Record",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"notes\": \"Patient forms received and under review\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{recordId}}"]
+            },
+            "description": "Update record status and notes. Status values: 'pending', 'in_progress', 'completed', 'cancelled'"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Record",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{recordId}}"]
+            },
+            "description": "Delete a record and all its related data (forms, consent, evaluations)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Patient Forms (Public - No Auth)",
+      "item": [
+        {
+          "name": "Get Form by Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/records/form/{{formToken}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "form", "{{formToken}}"]
+            },
+            "description": "PUBLIC ENDPOINT - Get record details using the form link token. This is used by patients to access their forms without authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Patient Form",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{formToken}}\",\n  \"medical_history\": {\n    \"allergies\": [\"Penicillin\", \"Latex\"],\n    \"current_medications\": [\"Aspirin 100mg daily\", \"Lisinopril 10mg daily\"],\n    \"previous_surgeries\": [\"Appendectomy (2010)\"],\n    \"chronic_conditions\": [\"Hypertension\"],\n    \"family_history\": \"Father with heart disease\"\n  },\n  \"anesthesia_history\": {\n    \"previous_anesthesia\": true,\n    \"complications\": \"None\",\n    \"last_anesthesia_date\": \"2010-05-15\"\n  },\n  \"current_health\": {\n    \"weight\": 75,\n    \"height\": 170,\n    \"smoking\": false,\n    \"alcohol\": \"Occasional\",\n    \"exercise\": \"Moderate\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records/form",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "form"]
+            },
+            "description": "PUBLIC ENDPOINT - Submit patient medical form using the token. Patients fill this before their appointment."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Consent Form",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{formToken}}\",\n  \"consent_type\": \"anesthesia\",\n  \"patient_signature\": \"base64_encoded_signature_image\",\n  \"agreed_terms\": true,\n  \"witness_name\": \"Nurse Jane Smith\",\n  \"witness_signature\": \"base64_encoded_witness_signature\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records/consent",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "consent"]
+            },
+            "description": "PUBLIC ENDPOINT - Submit consent form with digital signatures."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

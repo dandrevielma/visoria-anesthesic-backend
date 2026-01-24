@@ -157,9 +157,9 @@ router.post(
       });
     }
 
-    if (!["pre_anesthesia", "post_anesthesia"].includes(type)) {
+    if (!["sedation", "surgical"].includes(type)) {
       return res.status(400).json({
-        error: "type must be 'pre_anesthesia' or 'post_anesthesia'",
+        error: "type must be 'sedation' or 'surgical'",
       });
     }
 
@@ -174,14 +174,13 @@ router.post(
       return res.status(404).json({ error: "Patient not found" });
     }
 
-    // Generate unique record number (e.g., REC-2024-001)
-    const year = new Date().getFullYear();
+    // Generate unique record number (incremental)
     const count = await db
       .selectFrom("record")
       .select(db.fn.count<number>("id").as("count"))
       .executeTakeFirstOrThrow();
     
-    const recordNumber = `REC-${year}-${String(Number(count.count) + 1).padStart(4, "0")}`;
+    const recordNumber = String(Number(count.count) + 1);
 
     // Generate unique token for patient form access
     const formToken = crypto.randomBytes(32).toString("hex");

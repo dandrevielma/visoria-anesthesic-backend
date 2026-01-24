@@ -12,7 +12,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://example.com'],
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'https://example.com'],
     credentials: true,
   })
 );
