@@ -6,6 +6,7 @@ import { exampleRouter } from "./routes/example";
 import { rolesRouter } from "./routes/roles";
 import { patientsRouter } from "./routes/patients";
 import { recordsRouter } from "./routes/records";
+import patientFormsRouter from "./routes/patientForms";
 import { errorHandler } from "./middleware/errorHandler";
 import cors from "cors";
 const app = express();
@@ -38,7 +39,8 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/example", exampleRouter);
 app.use("/api/roles", rolesRouter);
 app.use("/api/patients", patientsRouter);
-app.use("/api/records", recordsRouter);
+app.use("/api/patient-forms", patientFormsRouter); // Public patient forms (no auth)
+app.use("/api/records", recordsRouter); // Protected records routes
 
 app.use(errorHandler);
 

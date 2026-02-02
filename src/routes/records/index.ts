@@ -6,7 +6,192 @@ import crypto from "crypto";
 
 const router = Router();
 
-// All record routes require authentication
+/**
+ * GET /api/records/:recordId/consent
+ * Returns existing informed consent if signed
+ * PUBLIC ROUTE - No authentication required
+ */
+router.get(
+  "/:recordId/consent",
+  expressTryCatch(async (req: Request, res: Response) => {
+    const { recordId } = req.params;
+
+    if (!recordId) {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "Se requiere el ID de la consulta",
+      });
+    }
+
+    const consent = await db
+      .selectFrom("consent")
+      .selectAll()
+      .where("record_id", "=", recordId)
+      .executeTakeFirst();
+
+    if (!consent) {
+      return res.status(404).json({
+        error: "Consent not found",
+        message: "No se encontró consentimiento para esta consulta",
+      });
+    }
+
+    res.json({
+      id: consent.id,
+      recordId: consent.record_id,
+      consentText: consent.consent_text,
+      isAccepted: consent.is_accepted,
+      patientName: consent.patient_name,
+      patientAge: consent.patient_age,
+      patientIdNumber: consent.patient_id_number,
+      patientPhone: consent.patient_phone,
+      signedAt: consent.signed_at,
+      ipAddress: consent.ip_address,
+      userAgent: consent.user_agent,
+      createdAt: consent.created_at,
+    });
+  })
+);
+
+/**
+ * POST /api/records/:recordId/consent
+ * Creates new informed consent record
+ * PUBLIC ROUTE - No authentication required
+ */
+router.post(
+  "/:recordId/consent",
+  expressTryCatch(async (req: Request, res: Response) => {
+    const { recordId } = req.params;
+    const { signature, age, phone } = req.body as {
+      signature: string;
+      age: string;
+      phone: string;
+    };
+
+    if (!recordId) {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "Se requiere el ID de la consulta",
+      });
+    }
+
+    // Validate required fields
+    if (!signature?.trim()) {
+      return res.status(400).json({
+        error: "Invalid data",
+        message: "La firma es requerida",
+      });
+    }
+
+    if (!age || isNaN(parseInt(age))) {
+      return res.status(400).json({
+        error: "Invalid data",
+        message: "La edad es requerida",
+      });
+    }
+
+    if (!phone?.trim()) {
+      return res.status(400).json({
+        error: "Invalid data",
+        message: "El teléfono es requerido",
+      });
+    }
+
+    // Check if consent already exists
+    const existing = await db
+      .selectFrom("consent")
+      .select("id")
+      .where("record_id", "=", recordId)
+      .executeTakeFirst();
+
+    if (existing) {
+      return res.status(409).json({
+        error: "Consent already exists",
+        message: "Ya existe un consentimiento firmado para esta consulta",
+      });
+    }
+
+    // Get record details with patient info to include in consent text
+    const record = await db
+      .selectFrom("record")
+      .leftJoin("patient", "record.patient_id", "patient.id")
+      .select([
+        "patient.identification_number as patient_identification",
+        "patient.first_name as patient_first_name",
+        "patient.last_name as patient_last_name",
+        "record.type",
+      ])
+      .where("record.id", "=", recordId)
+      .executeTakeFirst();
+
+    if (!record) {
+      return res.status(404).json({
+        error: "Record not found",
+        message: "No se encontró la consulta",
+      });
+    }
+
+    // Generate full consent text snapshot
+    const currentDate = new Date();
+    const day = currentDate.getDate();
+    const month = currentDate.toLocaleDateString("es-VE", { month: "long" });
+    const year = currentDate.getFullYear();
+    const recordType = record.type === "sedation" ? "Sedación" : "Quirúrgico";
+    const patientFullName = `${record.patient_first_name} ${record.patient_last_name}`;
+
+    const consentText = `CONSENTIMIENTO INFORMADO DE ANESTESIA
+
+Mediante la presente, yo: ${patientFullName} en calidad de paciente
+
+AUTORIZO al personal Médico Integrante del Departamento de Anestesiología que laboran en la Clínica Sanatrix; que me sean administrados los agentes anestésicos necesarios, de acuerdo a las técnicas y/o procedimientos establecidos para poderme practicar la intervención quirúrgica propuesta: ${recordType} a realizar por el cirujano; asumiendo así los riesgos que conlleve y dando cumplimiento al Artículo 34 de la Ley de Medicina Vigente que textualmente dice:
+
+Art.34 "Los actos y procedimientos médicos realizados con fines diagnósticos y terapéuticos que producen el acontecimiento o la pérdida transitoria de las facultades mentales, requieren de la autorización por escrito del paciente o de quien tenga su representante legal. En caso de extrema urgencia, si no existiese posibilidad inmediata de obtener el parecer o criterio del paciente o de su representante, se podrá realizar el procedimiento previa consulta de opinión de otro facultativo".
+
+De todo lo actuado se levantará un acta en la cual deberá constar la opinión del médico que llevo a cabo el procedimiento y de quien compartió la toma de la decisión, se deberá notificar al representante legal o al interesado con la mayor brevedad.
+
+Los procedimientos a que se contrae el presente artículo se emplearán exclusivamente para los fines de la salud y del bienestar del paciente.
+
+Caracas, ${day} de ${month} ${year}
+
+Paciente: ${signature}
+Edad: ${age}
+C.I. No.: ${record.patient_identification}
+Teléfono: ${phone}`;
+
+    // Insert consent
+    const consent = await db
+      .insertInto("consent")
+      .values({
+        record_id: recordId,
+        consent_text: consentText,
+        is_accepted: true,
+        patient_name: signature,
+        patient_age: parseInt(age),
+        patient_id_number: record.patient_identification,
+        patient_phone: phone,
+        signed_at: new Date(),
+        ip_address: req.ip || null,
+        user_agent: req.get("user-agent") || null,
+      })
+      .returningAll()
+      .executeTakeFirst();
+
+    res.json({
+      id: consent!.id,
+      recordId: consent!.record_id,
+      consentText: consent!.consent_text,
+      isAccepted: consent!.is_accepted,
+      patientName: consent!.patient_name,
+      patientAge: consent!.patient_age,
+      patientIdNumber: consent!.patient_id_number,
+      patientPhone: consent!.patient_phone,
+      signedAt: consent!.signed_at,
+      createdAt: consent!.created_at,
+    });
+  })
+);
+
+// All other record routes require authentication
 router.use(authMiddleware);
 
 /**
