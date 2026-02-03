@@ -16,6 +16,8 @@ router.get(
   expressTryCatch(async (req: Request, res: Response) => {
     const { recordId } = req.params;
 
+    console.log("[records/files] requested", { recordId });
+
     if (!recordId) {
       return res.status(400).json({
         error: "Invalid request",
@@ -191,8 +193,441 @@ Teléfono: ${phone}`;
   })
 );
 
+/**
+ * GET /api/records/:recordId/medical-report
+ * Returns existing medical report for a record
+ * PUBLIC ROUTE - No authentication required (for now, could be protected later)
+ */
+router.get(
+  "/:recordId/medical-report",
+  expressTryCatch(async (req: Request, res: Response) => {
+    const { recordId } = req.params;
+
+    if (!recordId) {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "Se requiere el ID de la consulta",
+      });
+    }
+
+    const medicalReport = await db
+      .selectFrom("medical_report")
+      .selectAll()
+      .where("record_id", "=", recordId)
+      .executeTakeFirst();
+
+    if (!medicalReport) {
+      return res.status(404).json({
+        error: "Medical report not found",
+        message: "No se encontró informe médico para esta consulta",
+      });
+    }
+
+    res.json({
+      id: medicalReport.id,
+      recordId: medicalReport.record_id,
+      content: medicalReport.content,
+      createdAt: medicalReport.created_at,
+      updatedAt: medicalReport.updated_at,
+    });
+  })
+);
+
+/**
+ * POST /api/records/:recordId/medical-report
+ * Create or update medical report for a record
+ * PUBLIC ROUTE - No authentication required (for now, could be protected later)
+ */
+router.post(
+  "/:recordId/medical-report",
+  expressTryCatch(async (req: Request, res: Response) => {
+    const { recordId } = req.params;
+    const { content } = req.body;
+
+    if (!recordId) {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "Se requiere el ID de la consulta",
+      });
+    }
+
+    if (!content || typeof content !== "string" || content.trim().length === 0) {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "El contenido del informe es requerido",
+      });
+    }
+
+    // Check if record exists
+    const record = await db
+      .selectFrom("record")
+      .select("id")
+      .where("id", "=", recordId)
+      .executeTakeFirst();
+
+    if (!record) {
+      return res.status(404).json({
+        error: "Record not found",
+        message: "La consulta no existe",
+      });
+    }
+
+    // Check if medical report already exists
+    const existingReport = await db
+      .selectFrom("medical_report")
+      .select("id")
+      .where("record_id", "=", recordId)
+      .executeTakeFirst();
+
+    let medicalReport;
+
+    if (existingReport) {
+      // Update existing report
+      medicalReport = await db
+        .updateTable("medical_report")
+        .set({
+          content: content.trim(),
+          updated_at: new Date(),
+        })
+        .where("record_id", "=", recordId)
+        .returningAll()
+        .executeTakeFirst();
+    } else {
+      // Create new report
+      medicalReport = await db
+        .insertInto("medical_report")
+        .values({
+          record_id: recordId,
+          content: content.trim(),
+        })
+        .returningAll()
+        .executeTakeFirst();
+    }
+
+    res.json({
+      id: medicalReport!.id,
+      recordId: medicalReport!.record_id,
+      content: medicalReport!.content,
+      createdAt: medicalReport!.created_at,
+      updatedAt: medicalReport!.updated_at,
+    });
+  })
+);
+
+/**
+ * GET /api/records/:recordId/recipe
+ * Returns existing recipe for a record
+ * PUBLIC ROUTE - No authentication required (for now, could be protected later)
+ */
+router.get(
+  "/:recordId/recipe",
+  expressTryCatch(async (req: Request, res: Response) => {
+    const { recordId } = req.params;
+
+    if (!recordId) {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "Se requiere el ID de la consulta",
+      });
+    }
+
+    const recipe = await db
+      .selectFrom("recipe")
+      .selectAll()
+      .where("record_id", "=", recordId)
+      .executeTakeFirst();
+
+    if (!recipe) {
+      return res.status(404).json({
+        error: "Recipe not found",
+        message: "No se encontró recipe para esta consulta",
+      });
+    }
+
+    res.json({
+      id: recipe.id,
+      recordId: recipe.record_id,
+      content: recipe.content,
+      createdAt: recipe.created_at,
+      updatedAt: recipe.updated_at,
+    });
+  })
+);
+
+/**
+ * POST /api/records/:recordId/recipe
+ * Create or update recipe for a record
+ * PUBLIC ROUTE - No authentication required (for now, could be protected later)
+ */
+router.post(
+  "/:recordId/recipe",
+  expressTryCatch(async (req: Request, res: Response) => {
+    const { recordId } = req.params;
+    const { content } = req.body;
+
+    if (!recordId) {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "Se requiere el ID de la consulta",
+      });
+    }
+
+    if (!content || typeof content !== "string" || content.trim().length === 0) {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "El contenido del recipe es requerido",
+      });
+    }
+
+    // Check if record exists
+    const record = await db
+      .selectFrom("record")
+      .select("id")
+      .where("id", "=", recordId)
+      .executeTakeFirst();
+
+    if (!record) {
+      return res.status(404).json({
+        error: "Record not found",
+        message: "La consulta no existe",
+      });
+    }
+
+    // Check if recipe already exists
+    const existingRecipe = await db
+      .selectFrom("recipe")
+      .select("id")
+      .where("record_id", "=", recordId)
+      .executeTakeFirst();
+
+    let recipe;
+
+    if (existingRecipe) {
+      // Update existing recipe
+      recipe = await db
+        .updateTable("recipe")
+        .set({
+          content: content.trim(),
+          updated_at: new Date(),
+        })
+        .where("record_id", "=", recordId)
+        .returningAll()
+        .executeTakeFirst();
+    } else {
+      // Create new recipe
+      recipe = await db
+        .insertInto("recipe")
+        .values({
+          record_id: recordId,
+          content: content.trim(),
+        })
+        .returningAll()
+        .executeTakeFirst();
+    }
+
+    res.json({
+      id: recipe!.id,
+      recordId: recipe!.record_id,
+      content: recipe!.content,
+      createdAt: recipe!.created_at,
+      updatedAt: recipe!.updated_at,
+    });
+  })
+);
+
+/**
+ * GET /api/records/:recordId/doctor-evaluation
+ * Returns existing doctor evaluation for a record
+ * PUBLIC ROUTE - No authentication required (for now, could be protected later)
+ */
+router.get(
+  "/:recordId/doctor-evaluation",
+  expressTryCatch(async (req: Request, res: Response) => {
+    const { recordId } = req.params;
+
+    if (!recordId) {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "Se requiere el ID de la consulta",
+      });
+    }
+
+    const doctorEvaluation = await db
+      .selectFrom("doctor_evaluation")
+      .selectAll()
+      .where("record_id", "=", recordId)
+      .executeTakeFirst();
+
+    if (!doctorEvaluation) {
+      return res.status(404).json({
+        error: "Doctor evaluation not found",
+        message: "No se encontró evaluación médica para esta consulta",
+      });
+    }
+
+    res.json({
+      id: doctorEvaluation.id,
+      recordId: doctorEvaluation.record_id,
+      answers: doctorEvaluation.evaluation_data,
+      isDraft: doctorEvaluation.is_draft,
+      createdAt: doctorEvaluation.created_at,
+      updatedAt: doctorEvaluation.updated_at,
+    });
+  })
+);
+
+/**
+ * POST /api/records/:recordId/doctor-evaluation
+ * Create or update doctor evaluation for a record
+ * PUBLIC ROUTE - No authentication required (for now, could be protected later)
+ */
+router.post(
+  "/:recordId/doctor-evaluation",
+  expressTryCatch(async (req: Request, res: Response) => {
+    const { recordId } = req.params;
+    const { answers, isDraft } = req.body;
+
+    if (!recordId) {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "Se requiere el ID de la consulta",
+      });
+    }
+
+    if (!answers || typeof answers !== "object") {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "Las respuestas de la evaluación son requeridas",
+      });
+    }
+
+    // Check if record exists and get assigned_doctor_id
+    const record = await db
+      .selectFrom("record")
+      .select(["id", "assigned_doctor_id"])
+      .where("id", "=", recordId)
+      .executeTakeFirst();
+
+    if (!record) {
+      return res.status(404).json({
+        error: "Record not found",
+        message: "La consulta no existe",
+      });
+    }
+
+    // Check if doctor evaluation already exists
+    const existingEvaluation = await db
+      .selectFrom("doctor_evaluation")
+      .select("id")
+      .where("record_id", "=", recordId)
+      .executeTakeFirst();
+
+    let doctorEvaluation;
+
+    if (existingEvaluation) {
+      // Update existing evaluation
+      doctorEvaluation = await db
+        .updateTable("doctor_evaluation")
+        .set({
+          evaluation_data: JSON.stringify(answers) as any,
+          is_draft: isDraft !== undefined ? isDraft : true,
+          updated_at: new Date(),
+        })
+        .where("record_id", "=", recordId)
+        .returningAll()
+        .executeTakeFirst();
+    } else {
+      // Create new evaluation
+      // Use assigned_doctor_id from record, or get from session, or get first available doctor
+      let doctorId = record.assigned_doctor_id || (req as any).user?.id;
+      
+      if (!doctorId) {
+        // Get first available doctor as fallback (via user_role table)
+        const firstDoctor = await db
+          .selectFrom("user_role")
+          .select("user_id")
+          .where("role", "=", "doctor")
+          .limit(1)
+          .executeTakeFirst();
+
+        if (!firstDoctor) {
+          // If no doctor role exists, just get any user
+          const anyUser = await db
+            .selectFrom("user")
+            .select("id")
+            .limit(1)
+            .executeTakeFirst();
+
+          if (!anyUser) {
+            return res.status(500).json({
+              error: "No users found",
+              message: "No se pudo asignar un médico para la evaluación",
+            });
+          }
+          doctorId = anyUser.id;
+        } else {
+          doctorId = firstDoctor.user_id;
+        }
+      }
+      
+      doctorEvaluation = await db
+        .insertInto("doctor_evaluation")
+        .values({
+          record_id: recordId,
+          doctor_id: doctorId,
+          evaluation_data: JSON.stringify(answers) as any,
+          is_draft: isDraft !== undefined ? isDraft : true,
+        })
+        .returningAll()
+        .executeTakeFirst();
+    }
+
+    res.json({
+      id: doctorEvaluation!.id,
+      recordId: doctorEvaluation!.record_id,
+      answers: doctorEvaluation!.evaluation_data,
+      isDraft: doctorEvaluation!.is_draft,
+      createdAt: doctorEvaluation!.created_at,
+      updatedAt: doctorEvaluation!.updated_at,
+    });
+  })
+);
+
 // All other record routes require authentication
 router.use(authMiddleware);
+
+/**
+ * GET /api/records/:recordId/files
+ * Returns files linked to a record
+ */
+router.get(
+  "/:recordId/files",
+  expressTryCatch(async (req: Request, res: Response) => {
+    const { recordId } = req.params;
+
+    if (!recordId) {
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "Se requiere el ID de la consulta",
+      });
+    }
+
+    const files = await db
+      .selectFrom("patient_file")
+      .selectAll()
+      .where("record_id", "=", recordId)
+      .where("is_deleted", "=", false)
+      .orderBy("uploaded_at", "desc")
+      .execute();
+
+    console.log("[records/files] response", {
+      recordId,
+      count: files.length,
+    });
+
+    res.json({ files });
+  })
+);
 
 /**
  * GET /api/records

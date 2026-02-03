@@ -1,615 +1,434 @@
 /**
- * PARTE 2: Evaluación Pre-Anestésica (Uso del Departamento)
- * Form filled by the anesthesiologist during patient evaluation
+ * Doctor Evaluation Questions
+ * Structured questionnaire for pre-anesthesia medical evaluation
  */
 
-export type DoctorQuestionType = 
-  | 'text'
-  | 'number'
-  | 'select'
-  | 'checkbox'
-  | 'textarea'
-  | 'radio'
-  | 'multiple-checkboxes';
-
-export interface DoctorQuestionOption {
-  value: string;
-  label: string;
+export interface DoctorEvaluationQuestion {
+  id: string
+  section: string
+  text: string
+  type: 'yes-no' | 'yes-no-details' | 'text' | 'textarea' | 'number' | 'select' | 'select-multiple'
+  required?: boolean
+  placeholder?: string
+  options?: Array<{ label: string; value: string }>
+  conditionalOn?: {
+    questionId: string
+    value: string | string[]
+  }
 }
 
-export interface DoctorFormField {
-  id: string;
-  section: string;
-  label: string;
-  type: DoctorQuestionType;
-  required: boolean;
-  options?: DoctorQuestionOption[];
-  placeholder?: string;
-  unit?: string; // For measurements like "mmHg", "kg", etc.
-  validation?: {
-    min?: number;
-    max?: number;
-    pattern?: string;
-  };
-}
-
-/**
- * Doctor Evaluation Form Structure
- */
-export const DOCTOR_EVALUATION_FIELDS: DoctorFormField[] = [
-  // Datos de Identificación
+export const DOCTOR_EVALUATION_QUESTIONS: DoctorEvaluationQuestion[] = [
+  // Datos del Paciente
   {
-    id: 'patient_sex',
-    section: 'Datos de Identificación',
-    label: 'Sexo',
-    type: 'radio',
+    id: 'nombre_paciente',
+    section: 'Datos del Paciente',
+    text: 'Nombre del paciente',
+    type: 'text',
+    required: true,
+  },
+  {
+    id: 'sexo',
+    section: 'Datos del Paciente',
+    text: 'Sexo',
+    type: 'select',
     required: true,
     options: [
-      { value: 'M', label: 'M' },
-      { value: 'F', label: 'F' },
+      { label: 'Masculino', value: 'masculino' },
+      { label: 'Femenino', value: 'femenino' },
     ],
   },
   {
-    id: 'patient_age',
-    section: 'Datos de Identificación',
-    label: 'Edad',
+    id: 'edad',
+    section: 'Datos del Paciente',
+    text: 'Edad',
     type: 'number',
     required: true,
-    unit: 'años',
   },
   {
-    id: 'patient_weight',
-    section: 'Datos de Identificación',
-    label: 'Peso',
+    id: 'peso_kg',
+    section: 'Datos del Paciente',
+    text: 'Peso (kg)',
     type: 'number',
     required: true,
-    unit: 'kg',
   },
   {
-    id: 'patient_height',
-    section: 'Datos de Identificación',
-    label: 'Talla',
+    id: 'talla_m',
+    section: 'Datos del Paciente',
+    text: 'Talla (m)',
     type: 'number',
     required: true,
-    unit: 'cm',
+    placeholder: 'Ej: 1.70',
   },
   {
-    id: 'patient_bmi',
-    section: 'Datos de Identificación',
-    label: 'IMC',
+    id: 'imc',
+    section: 'Datos del Paciente',
+    text: 'Índice de Masa Corporal (IMC)',
     type: 'number',
-    required: true,
-    placeholder: 'Calculado automáticamente',
+    placeholder: 'Se calcula automáticamente con peso / talla²',
   },
   {
-    id: 'diagnosis',
-    section: 'Datos de Identificación',
-    label: 'Diagnóstico',
+    id: 'diagnostico',
+    section: 'Datos del Paciente',
+    text: 'Diagnóstico',
     type: 'text',
     required: true,
   },
   {
-    id: 'proposed_intervention',
-    section: 'Datos de Identificación',
-    label: 'Intervención Propuesta',
+    id: 'intervencion_propuesta',
+    section: 'Datos del Paciente',
+    text: 'Intervención propuesta',
     type: 'text',
     required: true,
   },
   {
-    id: 'treating_doctor',
-    section: 'Datos de Identificación',
-    label: 'Médico Tratante',
+    id: 'medico_tratante',
+    section: 'Datos del Paciente',
+    text: 'Médico tratante',
     type: 'text',
     required: true,
   },
 
-  // Antecedentes
+  // Antecedentes y Encuesta
   {
-    id: 'previous_anesthesia',
-    section: 'Antecedentes',
-    label: 'Anestesias previas',
-    type: 'checkbox',
+    id: 'anestesias_previas',
+    section: 'Antecedentes y Encuesta',
+    text: '¿Ha recibido anestesias previas?',
+    type: 'yes-no',
     required: true,
   },
   {
-    id: 'anesthesia_complications',
-    section: 'Antecedentes',
-    label: 'Complicaciones',
+    id: 'complicaciones_anestesicas',
+    section: 'Antecedentes y Encuesta',
+    text: '¿Presentó complicaciones con anestesias previas?',
+    type: 'yes-no-details',
+    required: true,
+  },
+  {
+    id: 'alergia_a_medicamentos',
+    section: 'Antecedentes y Encuesta',
+    text: '¿Alergia a medicamentos?',
+    type: 'yes-no-details',
+    required: true,
+  },
+  {
+    id: 'hipertension_arterial_sistemica',
+    section: 'Antecedentes y Encuesta',
+    text: '¿Hipertensión arterial sistémica?',
+    type: 'yes-no',
+    required: true,
+  },
+  {
+    id: 'tratamiento_hipertension',
+    section: 'Antecedentes y Encuesta',
+    text: 'Tratamiento para hipertensión',
     type: 'text',
-    required: false,
+    conditionalOn: {
+      questionId: 'hipertension_arterial_sistemica',
+      value: 'yes',
+    },
   },
   {
-    id: 'medication_allergy',
-    section: 'Antecedentes',
-    label: 'Alergia a medicamentos',
-    type: 'checkbox',
+    id: 'diabetes',
+    section: 'Antecedentes y Encuesta',
+    text: 'Diabetes',
+    type: 'select',
     required: true,
-  },
-  {
-    id: 'has_hypertension',
-    section: 'Antecedentes',
-    label: 'Hipertensión arterial sistémica',
-    type: 'checkbox',
-    required: true,
-  },
-  {
-    id: 'hypertension_treatment',
-    section: 'Antecedentes',
-    label: 'Tratamiento',
-    type: 'text',
-    required: false,
-  },
-  {
-    id: 'diabetes_type',
-    section: 'Antecedentes',
-    label: 'Diabetes tipo',
-    type: 'radio',
-    required: false,
     options: [
-      { value: '1', label: '1' },
-      { value: '2', label: '2' },
-      { value: 'none', label: 'No' },
+      { label: 'No', value: 'no' },
+      { label: 'Tipo 1', value: 'tipo_1' },
+      { label: 'Tipo 2', value: 'tipo_2' },
     ],
   },
   {
-    id: 'diabetes_treatment',
-    section: 'Antecedentes',
-    label: 'Tratamiento diabetes',
+    id: 'tratamiento_diabetes',
+    section: 'Antecedentes y Encuesta',
+    text: 'Tratamiento para diabetes',
     type: 'text',
-    required: false,
+    conditionalOn: {
+      questionId: 'diabetes',
+      value: ['tipo_1', 'tipo_2'],
+    },
   },
   {
-    id: 'antiplatelet_suspended',
-    section: 'Antecedentes',
-    label: 'Antiagregante suspendido hace',
+    id: 'antiagregante_suspendido_hace',
+    section: 'Antecedentes y Encuesta',
+    text: 'Antiagregante suspendido hace',
     type: 'text',
-    required: false,
-    placeholder: 'Días',
+    placeholder: 'Indicar tiempo de suspensión',
   },
 
-  // Datos Positivos del Examen Físico
+  // Examen Físico - Signos Vitales
   {
-    id: 'blood_pressure',
-    section: 'Examen Físico',
-    label: 'TA',
+    id: 'tension_arterial_mmHg',
+    section: 'Examen Físico - Signos Vitales',
+    text: 'Tensión arterial (mmHg)',
     type: 'text',
     required: true,
-    unit: 'mmHg',
-    placeholder: '120/80',
+    placeholder: 'Ej: 120/80',
   },
   {
-    id: 'respiratory_rate',
-    section: 'Examen Físico',
-    label: 'F.r.',
+    id: 'frecuencia_respiratoria',
+    section: 'Examen Físico - Signos Vitales',
+    text: 'Frecuencia respiratoria',
     type: 'number',
     required: true,
-    unit: 'rpm',
   },
   {
-    id: 'heart_rate',
-    section: 'Examen Físico',
-    label: 'FcX\'',
+    id: 'frecuencia_cardiaca',
+    section: 'Examen Físico - Signos Vitales',
+    text: 'Frecuencia cardíaca',
     type: 'number',
     required: true,
-    unit: 'lpm',
   },
   {
-    id: 'temperature',
-    section: 'Examen Físico',
-    label: 'Temp.',
+    id: 'temperatura_c',
+    section: 'Examen Físico - Signos Vitales',
+    text: 'Temperatura (°C)',
     type: 'number',
     required: true,
-    unit: '°C',
-  },
-  {
-    id: 'skin_appearance',
-    section: 'Examen Físico',
-    label: 'Aspecto de la Piel: Sin lesiones evidentes',
-    type: 'radio',
-    required: true,
-    options: [
-      { value: 'S', label: 'S' },
-      { value: 'N', label: 'N' },
-    ],
-  },
-  {
-    id: 'consciousness_temporal',
-    section: 'Examen Físico',
-    label: 'Edo. de Conciencia: Orientad@ Temporal',
-    type: 'checkbox',
-    required: true,
-  },
-  {
-    id: 'consciousness_personal',
-    section: 'Examen Físico',
-    label: 'Edo. de Conciencia: Orientad@ Personal',
-    type: 'checkbox',
-    required: true,
-  },
-  {
-    id: 'consciousness_spatial',
-    section: 'Examen Físico',
-    label: 'Edo. de Conciencia: Orientad@ Espacial',
-    type: 'checkbox',
-    required: true,
-  },
-  {
-    id: 'head_normocephalic',
-    section: 'Examen Físico',
-    label: 'Cabeza-Cuello: Normocéfalo',
-    type: 'radio',
-    required: true,
-    options: [
-      { value: 'S', label: 'S' },
-      { value: 'N', label: 'N' },
-    ],
-  },
-  {
-    id: 'head_no_lesions',
-    section: 'Examen Físico',
-    label: 'Cabeza-Cuello: Sin lesiones evidentes',
-    type: 'radio',
-    required: true,
-    options: [
-      { value: 'S', label: 'S' },
-      { value: 'N', label: 'N' },
-    ],
-  },
-  {
-    id: 'spine_visible',
-    section: 'Examen Físico',
-    label: 'Columna Vertebral: Apófisis espinosas Visibles',
-    type: 'radio',
-    required: true,
-    options: [
-      { value: 'S', label: 'S' },
-      { value: 'N', label: 'N' },
-    ],
-  },
-  {
-    id: 'spine_palpable',
-    section: 'Examen Físico',
-    label: 'Columna Vertebral: Apófisis espinosas Palpables',
-    type: 'radio',
-    required: true,
-    options: [
-      { value: 'S', label: 'S' },
-      { value: 'N', label: 'N' },
-    ],
-  },
-  {
-    id: 'eupneic_at_rest',
-    section: 'Examen Físico',
-    label: 'Evaluación Pulmonar: Eupneic@ en reposo',
-    type: 'radio',
-    required: true,
-    options: [
-      { value: 'S', label: 'S' },
-      { value: 'N', label: 'N' },
-    ],
-  },
-  {
-    id: 'spirometry',
-    section: 'Examen Físico',
-    label: 'Espirometría',
-    type: 'text',
-    required: false,
-  },
-  {
-    id: 'abdomen_no_lesions',
-    section: 'Examen Físico',
-    label: 'Abdomen / Osteo-Muscular: Sin lesiones evidentes',
-    type: 'radio',
-    required: true,
-    options: [
-      { value: 'S', label: 'S' },
-      { value: 'N', label: 'N' },
-    ],
   },
 
-  // Laboratorio y Paraclínicos
+  // Examen Físico - General
   {
-    id: 'lab_hb',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'Hb',
-    type: 'number',
-    required: false,
-    unit: 'g/dL',
+    id: 'aspecto_piel_sin_lesiones',
+    section: 'Examen Físico',
+    text: 'Aspecto de la piel: sin lesiones evidentes',
+    type: 'yes-no',
+    required: true,
   },
   {
-    id: 'lab_hto',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'Hto',
-    type: 'number',
-    required: false,
-    unit: '%',
+    id: 'estado_conciencia_tiempo',
+    section: 'Examen Físico',
+    text: 'Estado de conciencia: Orientado en Tiempo',
+    type: 'yes-no',
+    required: true,
   },
   {
-    id: 'lab_glucose',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'Glic.',
-    type: 'number',
-    required: false,
-    unit: 'mg/dL',
+    id: 'estado_conciencia_persona',
+    section: 'Examen Físico',
+    text: 'Estado de conciencia: Orientado en Persona',
+    type: 'yes-no',
+    required: true,
   },
   {
-    id: 'lab_platelets',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'Plaq.',
-    type: 'number',
-    required: false,
+    id: 'estado_conciencia_espacio',
+    section: 'Examen Físico',
+    text: 'Estado de conciencia: Orientado en Espacio',
+    type: 'yes-no',
+    required: true,
   },
   {
-    id: 'lab_wbc',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'G.B.',
-    type: 'number',
-    required: false,
+    id: 'cabeza_cuello_normocefalo',
+    section: 'Examen Físico',
+    text: 'Cabeza y cuello: normocéfalo',
+    type: 'yes-no',
+    required: true,
   },
   {
-    id: 'lab_pt',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'PT',
-    type: 'number',
-    required: false,
-    unit: 'seg',
+    id: 'cabeza_cuello_sin_lesiones',
+    section: 'Examen Físico',
+    text: 'Cabeza y cuello: sin lesiones evidentes',
+    type: 'yes-no',
+    required: true,
   },
   {
-    id: 'lab_ptt',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'PTT',
-    type: 'number',
-    required: false,
-    unit: 'seg',
+    id: 'columna_apofisis_visibles',
+    section: 'Examen Físico',
+    text: 'Columna vertebral: apófisis espinosas visibles',
+    type: 'yes-no',
+    required: true,
   },
   {
-    id: 'lab_fibrinogen',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'Fibri',
-    type: 'number',
-    required: false,
+    id: 'columna_apofisis_palpables',
+    section: 'Examen Físico',
+    text: 'Columna vertebral: apófisis espinosas palpables',
+    type: 'yes-no',
+    required: true,
   },
   {
-    id: 'lab_hiv',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'H.I.V.',
+    id: 'evaluacion_pulmonar_eupneico',
+    section: 'Examen Físico',
+    text: 'Evaluación pulmonar: eupneico en reposo',
+    type: 'yes-no',
+    required: true,
+  },
+  {
+    id: 'espirometria',
+    section: 'Examen Físico',
+    text: 'Espirometría',
     type: 'text',
-    required: false,
   },
   {
-    id: 'lab_vdrl',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'VDRL',
-    type: 'text',
-    required: false,
+    id: 'abdomen_sin_lesiones',
+    section: 'Examen Físico',
+    text: 'Abdomen: sin lesiones evidentes',
+    type: 'yes-no',
+    required: true,
   },
   {
-    id: 'lab_creatinine',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'Creat.',
-    type: 'number',
-    required: false,
-    unit: 'mg/dL',
-  },
-  {
-    id: 'lab_urea',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'Urea',
-    type: 'number',
-    required: false,
-    unit: 'mg/dL',
-  },
-  {
-    id: 'lab_total_proteins',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'Proteínas Totales',
-    type: 'number',
-    required: false,
-    unit: 'g/dL',
-  },
-  {
-    id: 'lab_albumin',
-    section: 'Laboratorio y Paraclínicos',
-    label: 'Albúmina',
-    type: 'number',
-    required: false,
-    unit: 'g/dL',
+    id: 'osteo_muscular_sin_lesiones',
+    section: 'Examen Físico',
+    text: 'Osteo-muscular: sin lesiones evidentes',
+    type: 'yes-no',
+    required: true,
   },
 
   // Evaluación Cardiovascular
   {
-    id: 'cardio_eval_date',
+    id: 'rx_torax',
     section: 'Evaluación Cardiovascular',
-    label: 'Fecha',
+    text: 'Radiografía de tórax',
     type: 'text',
-    required: false,
-  },
-  {
-    id: 'chest_xray',
-    section: 'Evaluación Cardiovascular',
-    label: 'Rx. de Tórax',
-    type: 'text',
-    required: false,
   },
   {
     id: 'ekg',
     section: 'Evaluación Cardiovascular',
-    label: 'EKG',
+    text: 'Electrocardiograma (EKG)',
     type: 'text',
-    required: false,
   },
   {
-    id: 'exercise_tolerance_mets',
+    id: 'tolerancia_ejercicio_mets',
     section: 'Evaluación Cardiovascular',
-    label: 'Tolerancia al ejercicio METS',
-    type: 'radio',
-    required: true,
+    text: 'Tolerancia al ejercicio (METS)',
+    type: 'select',
     options: [
-      { value: '<4', label: '<4' },
-      { value: '>4', label: '>4' },
+      { label: '< 4 METS', value: 'menos_4' },
+      { label: '> 4 METS', value: 'mas_4' },
     ],
   },
 
-  // Vía Aérea (Evaluación)
+  // Vía Aérea
   {
     id: 'mallampati',
     section: 'Vía Aérea',
-    label: 'Mallampati',
-    type: 'radio',
+    text: 'Clasificación de Mallampati',
+    type: 'select',
     required: true,
     options: [
-      { value: '1', label: '1' },
-      { value: '2', label: '2' },
-      { value: '3', label: '3' },
-      { value: '4', label: '4' },
+      { label: 'I', value: '1' },
+      { label: 'II', value: '2' },
+      { label: 'III', value: '3' },
+      { label: 'IV', value: '4' },
     ],
   },
   {
-    id: 'thyromental_distance',
+    id: 'apertura_oral',
     section: 'Vía Aérea',
-    label: 'Distancia Tiromentoniana',
-    type: 'number',
-    required: true,
-    unit: 'cm',
-  },
-  {
-    id: 'mouth_opening',
-    section: 'Vía Aérea',
-    label: 'Apertura Oral',
-    type: 'number',
-    required: true,
-    unit: 'cm',
-  },
-  {
-    id: 'cervical_mobility',
-    section: 'Vía Aérea',
-    label: 'Movilidad Cervical',
+    text: 'Apertura oral',
     type: 'text',
     required: true,
   },
-
-  // Indicadores de Riesgo (Escalas I al V)
   {
-    id: 'asa_classification',
-    section: 'Indicadores de Riesgo',
-    label: 'A.S.A.',
-    type: 'radio',
+    id: 'distancia_tiromentoniana_cm',
+    section: 'Vía Aérea',
+    text: 'Distancia tiromentoniana (cm)',
+    type: 'number',
+    required: true,
+  },
+  {
+    id: 'movilidad_cervical',
+    section: 'Vía Aérea',
+    text: 'Movilidad cervical',
+    type: 'select',
     required: true,
     options: [
-      { value: 'I', label: 'I' },
-      { value: 'II', label: 'II' },
-      { value: 'III', label: 'III' },
-      { value: 'IV', label: 'IV' },
-      { value: 'V', label: 'V' },
-      { value: 'E', label: 'E' },
+      { label: 'Clase I', value: 'clase_1' },
+      { label: 'Clase II', value: 'clase_2' },
+      { label: 'Clase III', value: 'clase_3' },
+      { label: 'Clase IV', value: 'clase_4' },
+    ],
+  },
+
+  // Indicadores de Riesgo
+  {
+    id: 'asa',
+    section: 'Indicadores de Riesgo',
+    text: 'Clasificación ASA',
+    type: 'select',
+    required: true,
+    options: [
+      { label: 'I', value: '1' },
+      { label: 'II', value: '2' },
+      { label: 'III', value: '3' },
+      { label: 'IV', value: '4' },
+      { label: 'V', value: '5' },
+      { label: 'E', value: 'e' },
     ],
   },
   {
     id: 'johns_hopkins',
     section: 'Indicadores de Riesgo',
-    label: 'JOHNS HOPKINS',
-    type: 'radio',
+    text: 'Escala Johns Hopkins',
+    type: 'select',
     required: true,
     options: [
-      { value: 'I', label: 'I' },
-      { value: 'II', label: 'II' },
-      { value: 'III', label: 'III' },
-      { value: 'IV', label: 'IV' },
-      { value: 'V', label: 'V' },
+      { label: 'I', value: '1' },
+      { label: 'II', value: '2' },
+      { label: 'III', value: '3' },
+      { label: 'IV', value: '4' },
+      { label: 'V', value: '5' },
     ],
   },
   {
-    id: 'airway_risk',
+    id: 'via_aerea_riesgo',
     section: 'Indicadores de Riesgo',
-    label: 'VÍA AÉREA',
-    type: 'radio',
+    text: 'Clasificación de riesgo de vía aérea',
+    type: 'select',
     required: true,
     options: [
-      { value: 'I', label: 'I' },
-      { value: 'II', label: 'II' },
-      { value: 'III', label: 'III' },
-      { value: 'IV', label: 'IV' },
-      { value: 'V', label: 'V' },
+      { label: 'I', value: '1' },
+      { label: 'II', value: '2' },
+      { label: 'III', value: '3' },
+      { label: 'IV', value: '4' },
+      { label: 'V', value: '5' },
     ],
-  },
-  {
-    id: 'bmi_calculation',
-    section: 'Indicadores de Riesgo',
-    label: 'I.M.C. P(kilos) / A (en metros al cuadrado)',
-    type: 'text',
-    required: false,
-    placeholder: 'Calculado automáticamente',
   },
 
-  // Plan y Observaciones
+  // Plan Anestésico
   {
-    id: 'suggested_anesthetic_technique',
-    section: 'Plan y Observaciones',
-    label: 'Técnica Anestésica Sugerida',
+    id: 'tecnica_anestesica_sugerida',
+    section: 'Plan Anestésico',
+    text: 'Técnica anestésica sugerida',
     type: 'textarea',
     required: true,
   },
   {
-    id: 'nebulization',
-    section: 'Plan y Observaciones',
-    label: 'Medicación Pre-Anestésica: Nebulización',
-    type: 'radio',
-    required: false,
-    options: [
-      { value: 'S', label: 'S' },
-      { value: 'N', label: 'N' },
-    ],
+    id: 'nebulizacion',
+    section: 'Plan Anestésico',
+    text: 'Nebulización',
+    type: 'yes-no',
   },
   {
-    id: 'steroids_vev',
-    section: 'Plan y Observaciones',
-    label: 'Esteroides VEV',
-    type: 'radio',
-    required: false,
-    options: [
-      { value: 'S', label: 'S' },
-      { value: 'N', label: 'N' },
-    ],
+    id: 'esteroides_vev',
+    section: 'Plan Anestésico',
+    text: 'Esteroides VEV',
+    type: 'yes-no',
   },
   {
-    id: 'perioperative_glycemia',
-    section: 'Plan y Observaciones',
-    label: 'Glicemias perioperatorias',
-    type: 'radio',
-    required: false,
-    options: [
-      { value: 'S', label: 'S' },
-      { value: 'N', label: 'N' },
-    ],
+    id: 'glicemias_perioperatorias',
+    section: 'Plan Anestésico',
+    text: 'Glicemias perioperatorias',
+    type: 'yes-no',
   },
   {
     id: 'sap',
-    section: 'Plan y Observaciones',
-    label: 'S.A.P.',
-    type: 'textarea',
-    required: false,
+    section: 'Plan Anestésico',
+    text: 'S.A.P.',
+    type: 'text',
   },
-];
 
-/**
- * Get fields by section for organized display
- */
-export function getDoctorFieldsBySection(): Map<string, DoctorFormField[]> {
-  const sections = new Map<string, DoctorFormField[]>();
-  
-  DOCTOR_EVALUATION_FIELDS.forEach(field => {
-    const sectionFields = sections.get(field.section) || [];
-    sectionFields.push(field);
-    sections.set(field.section, sectionFields);
-  });
-  
-  return sections;
-}
-
-/**
- * Calculate BMI helper
- */
-export function calculateBMI(weightKg: number, heightCm: number): number {
-  const heightM = heightCm / 100;
-  return Number((weightKg / (heightM * heightM)).toFixed(2));
-}
+  // Cierre
+  {
+    id: 'observaciones',
+    section: 'Observaciones',
+    text: 'Observaciones',
+    type: 'textarea',
+  },
+  {
+    id: 'medico_anestesiologo',
+    section: 'Observaciones',
+    text: 'Médico anestesiólogo',
+    type: 'text',
+    required: true,
+  },
+]
