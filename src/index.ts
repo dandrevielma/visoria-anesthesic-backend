@@ -13,6 +13,16 @@ import { uploadRouter } from "./uploadthing";
 import cors from "cors";
 const app = express();
 
+// Trust proxy MUST be set before any middleware
+app.set("trust proxy", true);
+
+// Debug: Log environment variables related to auth
+console.log('=== Auth Debug Info ===');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('BASE_URL:', process.env.BASE_URL);
+console.log('Trust Proxy:', app.get('trust proxy'));
+console.log('=====================');
+
 app.use(
   cors({
     origin: [
@@ -27,7 +37,6 @@ app.use(
   }),
 );
 
-app.set("trust proxy", true);
 app.all("/api/auth/{*any}", toNodeHandler(auth));
 app.use(express.urlencoded({ extended: true }));
 
