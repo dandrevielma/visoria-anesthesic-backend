@@ -15,9 +15,15 @@ const app = express();
 
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'https://example.com'],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:5173",
+      "https://example.com",
+      "https://visoria-anesthesic-frontend-production.up.railway.app",
+    ],
     credentials: true,
-  })
+  }),
 );
 
 app.set("trust proxy", true);
@@ -30,7 +36,7 @@ app.use(
       // store raw buffer for later verification
       (req as any).rawBody = buf;
     },
-  })
+  }),
 );
 const port = 8080;
 
@@ -50,7 +56,7 @@ app.use(
       token: process.env.UPLOADTHING_TOKEN,
       callbackUrl: `${process.env.BASE_URL ?? "http://localhost:8080"}/api/uploadthing`,
     },
-  })
+  }),
 ); // Public uploadthing route
 app.use("/api/records", recordsRouter); // Protected records routes
 
