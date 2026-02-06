@@ -28,7 +28,7 @@ export const auth = betterAuth({
 
   emailVerification: {
     sendOnSignUp: true,
-    sendOnSignIn: true,
+    sendOnSignIn: false, // Disable email verification on sign-in for now
     sendVerificationEmail: async ({ token, url, user }, request) => {
       const newUrl = new URL(url);
       newUrl.searchParams.set(
@@ -68,10 +68,10 @@ export const auth = betterAuth({
     "https://visoria-anesthesic-frontend-production.up.railway.app"
   ],
   advanced: {
-    useSecureCookies: process.env.NODE_ENV === "production",
+    useSecureCookies: true, // Always use secure cookies in production
     cookieOptions: {
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      secure: process.env.NODE_ENV === "production",
+      sameSite: "none", // Required for cross-site cookies
+      secure: true, // Required for SameSite=none
     },
   },
   plugins: [openAPI()],
