@@ -7,7 +7,12 @@ export const auth = betterAuth({
   database: {
     db: db,
   },
-
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes cache
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
