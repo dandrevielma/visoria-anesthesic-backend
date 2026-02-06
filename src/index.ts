@@ -21,6 +21,7 @@ app.use(
       "http://localhost:5173",
       "https://example.com",
       "https://visoria-anesthesic-frontend-production.up.railway.app",
+      "https://visoria-anesthesic-frontend.vercel.app"
     ],
     credentials: true,
   }),
