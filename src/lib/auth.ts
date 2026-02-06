@@ -58,7 +58,16 @@ export const auth = betterAuth({
   // },
   trustedOrigins: [
     "localhost:3000",
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "https://visoria-anesthesic-frontend.vercel.app",
+    "https://visoria-anesthesic-frontend-production.up.railway.app"
   ],
+  advanced: {
+    useSecureCookies: process.env.NODE_ENV === "production",
+    cookieOptions: {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
+  },
   plugins: [openAPI()],
 });
