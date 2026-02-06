@@ -12,7 +12,11 @@ export const authMiddleware = async (
   next: NextFunction
 ) => {
   const session = await auth.api.getSession({
-    headers: fromNodeHeaders(req.headers),
+    headers: {
+      ...fromNodeHeaders(req.headers),
+      // Ensure cookies are included
+      cookie: req.headers.cookie || '',
+    },
   });
 
   if (!session) {

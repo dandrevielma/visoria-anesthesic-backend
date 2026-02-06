@@ -23,6 +23,23 @@ console.log('BASE_URL:', process.env.BASE_URL);
 console.log('Trust Proxy:', app.get('trust proxy'));
 console.log('=====================');
 
+// Middleware to fix SameSite cookies for cross-site auth
+app.use((req, res, next) => {
+  const originalSetHeader = res.setHeader;
+  res.setHeader = function(name: string, value: any) {
+    if (name.toLowerCase() === 'set-cookie') {
+      const cookies = Array.isArray(value) ? value : [value];
+      const fixedCookies = cookies.map((cookie: string) => {
+        // Replace SameSite=Lax with SameSite=None for production
+        return cookie.replace(/SameSite=Lax/gi, 'SameSite=None');
+      });
+      return originalSetHeader.call(this, name, fixedCookies);
+    }
+    return originalSetHeader.call(this, name, value);
+  };
+  next();
+});
+
 app.use(
   cors({
     origin: [
