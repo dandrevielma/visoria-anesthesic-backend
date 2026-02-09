@@ -145,14 +145,31 @@ export const PRE_ANESTHESIA_QUESTIONS: FormQuestion[] = [
         type: 'number',
         required: false,
         placeholder: 'Número de cigarrillos al día',
+        validation: {
+          min: 1,
+        },
       },
       {
-        id: 'smoking_duration_years',
+        id: 'smoking_duration_unit',
         section: 'Estilo de Vida',
         text: '¿Desde hace cuánto tiempo?',
+        type: 'select',
+        required: false,
+        options: [
+          { value: 'months', label: 'Meses' },
+          { value: 'years', label: 'Años' },
+        ],
+      },
+      {
+        id: 'smoking_duration_amount',
+        section: 'Estilo de Vida',
+        text: 'Cantidad',
         type: 'number',
         required: false,
-        placeholder: 'Años fumando',
+        placeholder: 'Ingrese la cantidad',
+        validation: {
+          min: 0,
+        },
       },
       {
         id: 'smoking_quit_timing',
@@ -160,7 +177,11 @@ export const PRE_ANESTHESIA_QUESTIONS: FormQuestion[] = [
         text: '¿Cuándo dejó de fumar?',
         type: 'text',
         required: false,
-        placeholder: 'Hace cuánto tiempo dejó de fumar',
+        placeholder: 'Ej: Julio 2025',
+        conditionalOn: {
+          questionId: 'smoking_current_status',
+          value: 'quit',
+        },
       },
     ],
   },

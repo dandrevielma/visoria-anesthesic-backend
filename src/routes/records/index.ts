@@ -360,8 +360,17 @@ router.get(
 
     const doctorEvaluation = await db
       .selectFrom("doctor_evaluation")
-      .selectAll()
-      .where("record_id", "=", recordId)
+      .leftJoin("user", "user.id", "doctor_evaluation.doctor_id")
+      .select([
+        "doctor_evaluation.id",
+        "doctor_evaluation.record_id",
+        "doctor_evaluation.evaluation_data",
+        "doctor_evaluation.is_draft",
+        "doctor_evaluation.created_at",
+        "doctor_evaluation.updated_at",
+        "user.name as doctor_name",
+      ])
+      .where("doctor_evaluation.record_id", "=", recordId)
       .executeTakeFirst();
 
     if (!doctorEvaluation) {
@@ -378,6 +387,7 @@ router.get(
       isDraft: doctorEvaluation.is_draft,
       createdAt: doctorEvaluation.created_at,
       updatedAt: doctorEvaluation.updated_at,
+      doctorName: doctorEvaluation.doctor_name,
     });
   })
 );

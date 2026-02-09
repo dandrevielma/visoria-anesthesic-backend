@@ -68,10 +68,12 @@ export const auth = betterAuth({
     "https://visoria-anesthesic-frontend-production.up.railway.app"
   ],
   advanced: {
-    useSecureCookies: true, // Always use secure cookies in production
+    useSecureCookies: process.env.NODE_ENV === "production", // Only in production
     cookieOptions: {
-      sameSite: "none", // Required for cross-site cookies
-      secure: true, // Required for SameSite=none
+      sameSite: "lax", // Changed to lax since we're using proxy (same-site)
+      secure: process.env.NODE_ENV === "production", // Only secure in production
+      httpOnly: true, // Prevent XSS attacks
+      path: "/", // Available on all paths
     },
   },
   plugins: [openAPI()],
