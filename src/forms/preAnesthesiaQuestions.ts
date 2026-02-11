@@ -305,6 +305,185 @@ export const PRE_ANESTHESIA_QUESTIONS: FormQuestion[] = [
     required: true,
     placeholder: 'Especifique el tipo de dieta',
   },
+
+  // Question 16: Sleep difficulty
+  {
+    id: 'sleep_difficulty',
+    section: 'Salud General',
+    text: '¿Tiene dificultad con su sueño?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Describa',
+  },
+
+  // Question 17: Thyroid/Endocrine conditions
+  {
+    id: 'endocrine_conditions',
+    section: 'Salud General',
+    text: '¿Sufre Ud. o ha sufrido de tiroides, diabetes u otra afección de sus glándulas endocrinas?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Especifique',
+  },
+
+  // Question 18: Recent respiratory symptoms
+  {
+    id: 'recent_respiratory_symptoms',
+    section: 'Salud Respiratoria',
+    text: '¿Ha tenido recientemente tos, gripe o dolor de garganta?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: '¿Fecha última de crisis?',
+  },
+
+  // Question 19: Respiratory conditions
+  {
+    id: 'respiratory_conditions',
+    section: 'Salud Respiratoria',
+    text: '¿Ha sufrido Ud. de alguna afección respiratoria, Asma, Bronquitis?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Especifique',
+  },
+
+  // Question 20: Liver disease
+  {
+    id: 'liver_disease',
+    section: 'Salud General',
+    text: '¿Ha sufrido Ud. de hepatitis o de alguna otra enfermedad del hígado?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Describa',
+  },
+
+  // Question 21: Heart disease
+  {
+    id: 'heart_disease',
+    section: 'Salud Cardiovascular',
+    text: '¿Sufre Ud. del corazón?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Describa',
+  },
+
+  // Question 22: Hypertension
+  {
+    id: 'hypertension',
+    section: 'Salud Cardiovascular',
+    text: '¿Es Ud. hipertenso?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Especifique tratamiento',
+  },
+
+  // Question 23: Kidney disease
+  {
+    id: 'kidney_disease',
+    section: 'Salud General',
+    text: '¿Sufre Ud. o ha sufrido de alguna enfermedad de los riñones?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Describa',
+  },
+
+  // Question 24: Musculoskeletal conditions
+  {
+    id: 'musculoskeletal_conditions',
+    section: 'Salud General',
+    text: '¿Sufre Ud. o ha sufrido de alguna enfermedad de sus huesos, músculos o columna?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Especifique',
+  },
+
+  // Question 25: Gastrointestinal conditions
+  {
+    id: 'gastrointestinal_conditions',
+    section: 'Salud General',
+    text: '¿Sufre Ud. o ha sufrido alguna enfermedad gastrointestinal, gastritis, úlceras (hernia hiatal)?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Especifique',
+  },
+
+  // Question 26: Sports/Exercise
+  {
+    id: 'sports_exercise',
+    section: 'Estilo de Vida',
+    text: '¿Realiza algún deporte o ejercicio?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Especifique',
+  },
+
+  // Question 27: HIV testing
+  {
+    id: 'hiv_testing',
+    section: 'Salud General',
+    text: '¿Se ha hecho pruebas de despistaje de SIDA?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Describa',
+  },
+
+  // Question 28: Blood/Coagulation disorders
+  {
+    id: 'blood_disorders',
+    section: 'Salud General',
+    text: '¿Sufre Ud. o ha sufrido de alguna enfermedad de la sangre o la coagulación?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Especifique',
+  },
+
+  // Question 29: Blood transfusions
+  {
+    id: 'blood_transfusions',
+    section: 'Salud General',
+    text: '¿Le han hecho alguna transfusión sanguínea?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Especifique',
+  },
+
+  // Question 30: Other diseases
+  {
+    id: 'other_diseases',
+    section: 'Salud General',
+    text: '¿Sufre Ud. o ha sufrido de alguna enfermedad que no se le haya interrogado?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Especifique',
+  },
+
+  // Question 31: Fasting status
+  {
+    id: 'fasting_status',
+    section: 'Preparación para la Intervención',
+    text: '¿En caso de que este cuestionario sea contestado el mismo día de la intervención: ¿Está Ud. en ayunas?',
+    type: 'yes-no',
+    required: false,
+  },
+
+  // Question 32: Pregnancy (female patients only)
+  {
+    id: 'possible_pregnancy',
+    section: 'Información Femenina',
+    text: '¿Cree Ud. que podría estar embarazada?',
+    type: 'yes-no-details',
+    required: false,
+    placeholder: 'Fecha última menstruación',
+  },
+
+  // Question 33: Pediatric development (pediatric patients only)
+  {
+    id: 'pediatric_development_issues',
+    section: 'Información Pediátrica',
+    text: '¿Su niño tiene trastornos de desarrollo, aprendizaje o conducta?',
+    type: 'yes-no-details',
+    required: false,
+    placeholder: 'Especifique',
+  },
 ];
 
 /**
