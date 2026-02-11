@@ -21,7 +21,7 @@ export const verifyEmailTemplate = ({
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
           <tr>
             <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Visoria / Medical</h1>
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Visoria Medical</h1>
             </td>
           </tr>
           <tr>

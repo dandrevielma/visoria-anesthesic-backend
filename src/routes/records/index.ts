@@ -509,12 +509,10 @@ router.post(
   })
 );
 
-// All other record routes require authentication
-router.use(authMiddleware);
-
 /**
  * GET /api/records/:recordId/files
  * Returns files linked to a record
+ * PUBLIC ROUTE - No authentication required
  */
 router.get(
   "/:recordId/files",
@@ -548,6 +546,7 @@ router.get(
 /**
  * GET /api/records
  * List all records with optional filters
+ * PUBLIC ROUTE - No authentication required
  */
 router.get(
   "/",
@@ -602,6 +601,9 @@ router.get(
     res.json(records);
   })
 );
+
+// All other record routes require authentication
+router.use(authMiddleware);
 
 /**
  * GET /api/records/:id
