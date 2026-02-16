@@ -138,6 +138,31 @@ export const PRE_ANESTHESIA_QUESTIONS: FormQuestion[] = [
           { value: 'quit', label: 'Dejó de fumar' },
         ],
       },
+      // Para fumadores actuales
+      {
+        id: 'smoking_duration',
+        section: 'Estilo de Vida',
+        text: '¿Desde hace cuánto tiempo fuma?',
+        type: 'text',
+        required: false,
+        placeholder: 'Ej: 4 años, 6 meses',
+        conditionalOn: {
+          questionId: 'smoking_current_status',
+          value: 'current',
+        },
+      },
+      {
+        id: 'smoking_start_date',
+        section: 'Estilo de Vida',
+        text: '¿Fecha desde que empezó a fumar?',
+        type: 'text',
+        required: false,
+        placeholder: 'Ej: Enero 2020',
+        conditionalOn: {
+          questionId: 'smoking_current_status',
+          value: 'current',
+        },
+      },
       {
         id: 'smoking_daily_quantity',
         section: 'Estilo de Vida',
@@ -148,27 +173,22 @@ export const PRE_ANESTHESIA_QUESTIONS: FormQuestion[] = [
         validation: {
           min: 1,
         },
+        conditionalOn: {
+          questionId: 'smoking_current_status',
+          value: 'current',
+        },
       },
+      // Para los que dejaron de fumar
       {
-        id: 'smoking_duration_unit',
+        id: 'smoking_total_duration',
         section: 'Estilo de Vida',
-        text: '¿Desde hace cuánto tiempo?',
-        type: 'select',
+        text: '¿Cuánto tiempo fue fumador?',
+        type: 'text',
         required: false,
-        options: [
-          { value: 'months', label: 'Meses' },
-          { value: 'years', label: 'Años' },
-        ],
-      },
-      {
-        id: 'smoking_duration_amount',
-        section: 'Estilo de Vida',
-        text: 'Cantidad',
-        type: 'number',
-        required: false,
-        placeholder: 'Ingrese la cantidad',
-        validation: {
-          min: 0,
+        placeholder: 'Ej: 10 años',
+        conditionalOn: {
+          questionId: 'smoking_current_status',
+          value: 'quit',
         },
       },
       {
