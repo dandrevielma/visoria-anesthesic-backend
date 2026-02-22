@@ -708,7 +708,7 @@ export const PRE_ANESTHESIA_QUESTIONS: FormQuestion[] = [
   {
     id: 'recent_respiratory_symptoms',
     section: 'Salud Respiratoria',
-    text: '¿Ha tenido recientemente tos, gripe o dolor de garganta?',
+    text: '¿Ha tenido tos, gripe o dolor de garganta en el último mes?',
     type: 'yes-no-details',
     required: true,
     placeholder: '¿Fecha última de crisis?',
