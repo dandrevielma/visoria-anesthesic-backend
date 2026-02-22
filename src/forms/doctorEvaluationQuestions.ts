@@ -84,8 +84,17 @@ export const DOCTOR_EVALUATION_QUESTIONS: DoctorEvaluationQuestion[] = [
     id: 'medico_tratante',
     section: 'Datos del Paciente',
     text: 'Médico tratante',
-    type: 'text',
+    type: 'select',
     required: true,
+    subQuestions: [
+      {
+        id: 'medico_tratante_otro',
+        text: 'Especifique el nombre del médico',
+        type: 'text',
+        placeholder: 'Nombre completo del médico',
+        showWhen: 'OTRO',
+      },
+    ],
   },
 
   // Antecedentes y Encuesta

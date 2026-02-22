@@ -611,7 +611,7 @@ export const PRE_ANESTHESIA_QUESTIONS: FormQuestion[] = [
     text: '¿Ha sido sometido a tratamiento con radioterapia o quimioterapia?',
     type: 'yes-no-details',
     required: true,
-    placeholder: 'Especifique el tratamiento y cuándo',
+    placeholder: 'Indique el diagnóstico por el cual se aplicó ese tratamiento',
   },
 
   // Question 9: Prosthetics
@@ -644,37 +644,53 @@ export const PRE_ANESTHESIA_QUESTIONS: FormQuestion[] = [
     placeholder: 'Describa la dificultad',
   },
 
-  // Question 12: Weight changes
+  // Question 12: Weight changes with sub-questions
   {
     id: 'recent_weight_changes',
     section: 'Información Física',
     text: '¿Ha tenido cambios de peso importantes recientemente?',
-    type: 'yes-no-details',
+    type: 'yes-no',
     required: true,
-    placeholder: 'Especifique cuánto peso ganó o perdió',
+    subQuestions: [
+      {
+        id: 'weight_loss_voluntary',
+        section: 'Información Física',
+        text: '¿La pérdida de peso fue voluntaria?',
+        type: 'select',
+        required: false,
+        options: [
+          { value: 'yes', label: 'Sí' },
+          { value: 'no', label: 'No' },
+        ],
+      },
+      {
+        id: 'weight_change_voluntary_details',
+        section: 'Información Física',
+        text: 'Información adicional',
+        type: 'text',
+        required: false,
+        placeholder: 'Especifique',
+        conditionalOn: {
+          questionId: 'weight_loss_voluntary',
+          value: 'yes',
+        },
+      },
+      {
+        id: 'weight_change_involuntary_details',
+        section: 'Información Física',
+        text: 'Información adicional',
+        type: 'text',
+        required: false,
+        placeholder: 'Especifique',
+        conditionalOn: {
+          questionId: 'weight_loss_voluntary',
+          value: 'no',
+        },
+      },
+    ],
   },
 
-  // Question 13: Seizures
-  {
-    id: 'has_seizures',
-    section: 'Condiciones Neurológicas',
-    text: '¿Sufre o ha sufrido de convulsiones?',
-    type: 'yes-no-details',
-    required: true,
-    placeholder: 'Especifique frecuencia y tratamiento',
-  },
-
-  // Question 14: Mental health
-  {
-    id: 'mental_health_treatment',
-    section: 'Condiciones Neurológicas',
-    text: '¿Está bajo tratamiento psiquiátrico o psicológico?',
-    type: 'yes-no-details',
-    required: true,
-    placeholder: 'Especifique el tratamiento',
-  },
-
-  // Question 15: Dietary regimen
+  // Question 13: Dietary regimen
   {
     id: 'dietary_regimen',
     section: 'Información Adicional',
@@ -682,6 +698,26 @@ export const PRE_ANESTHESIA_QUESTIONS: FormQuestion[] = [
     type: 'yes-no-details',
     required: true,
     placeholder: 'Especifique el tipo de dieta',
+  },
+
+  // Question 14: Seizures
+  {
+    id: 'has_seizures',
+    section: 'Condiciones Neurológicas',
+    text: '¿Sufre o ha sufrido de convulsiones?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Indique la ultima vez que ocurrió y cual es el tratamiento',
+  },
+
+  // Question 15: Mental health
+  {
+    id: 'mental_health_treatment',
+    section: 'Condiciones Neurológicas',
+    text: '¿Está bajo tratamiento psiquiátrico o psicológico?',
+    type: 'yes-no-details',
+    required: true,
+    placeholder: 'Especifique el tratamiento',
   },
 
   // Question 16: Sleep difficulty
