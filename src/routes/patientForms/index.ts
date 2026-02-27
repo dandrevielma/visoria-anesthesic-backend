@@ -8,8 +8,49 @@ import { db } from '../../lib/db';
 import { expressTryCatch } from '../../middleware/globalTryCatch';
 import { PRE_ANESTHESIA_QUESTIONS } from '../../forms/preAnesthesiaQuestions';
 import { PreAnesthesiaFormAnswers } from '../../forms/types';
+import { sendPatientQuestionnaireCompletedEmail } from '../../lib/resend';
 
 const router = express.Router();
+
+async function sendCompletionEmailIfNeeded({
+  recordId,
+  isDraft,
+  wasDraftBefore,
+}: {
+  recordId: string;
+  isDraft: boolean;
+  wasDraftBefore: boolean;
+}) {
+  if (isDraft || !wasDraftBefore) {
+    return;
+  }
+
+  const patientData = await db
+    .selectFrom('record')
+    .innerJoin('patient', 'record.patient_id', 'patient.id')
+    .select([
+      'patient.email as email',
+      'patient.first_name as first_name',
+      'patient.last_name as last_name',
+    ])
+    .where('record.id', '=', recordId)
+    .executeTakeFirst();
+
+  if (!patientData?.email) {
+    return;
+  }
+
+  const fullName = `${patientData.first_name} ${patientData.last_name}`.trim() || 'Paciente';
+
+  try {
+    await sendPatientQuestionnaireCompletedEmail({
+      email: patientData.email,
+      name: fullName,
+    });
+  } catch (error) {
+    console.error('Error sending patient questionnaire completion email:', error);
+  }
+}
 
 /**
  * GET /api/records/:recordId/patient-form/questions
@@ -63,6 +104,7 @@ router.get(
       recordId: form.record_id,
       answers: form.record_specific_answers,
       isDraft: form.is_draft,
+      completedAt: form.completed_at,
       createdAt: form.created_at,
       updatedAt: form.updated_at,
     });
@@ -103,6 +145,9 @@ router.post(
       .where('record_id', '=', recordId)
       .executeTakeFirst();
 
+    const wasDraftBefore = existingForm ? existingForm.is_draft : true;
+    const completedAt = !isDraft ? (existingForm?.completed_at ?? new Date()) : null;
+
     let form;
 
     if (existingForm) {
@@ -112,6 +157,7 @@ router.post(
         .set({
           record_specific_answers: JSON.stringify(answers) as any,
           is_draft: isDraft,
+          completed_at: completedAt,
           updated_at: new Date(),
         })
         .where('record_id', '=', recordId)
@@ -125,16 +171,43 @@ router.post(
           record_id: recordId,
           record_specific_answers: JSON.stringify(answers) as any,
           is_draft: isDraft,
+          completed_at: completedAt,
         })
         .returningAll()
         .executeTakeFirst();
     }
+
+    if (!isDraft) {
+      const record = await db
+        .selectFrom('record')
+        .select(['id', 'type'])
+        .where('id', '=', recordId)
+        .executeTakeFirst();
+
+      if (record?.type === 'sedation') {
+        await db
+          .updateTable('record')
+          .set({
+            status: 'completed',
+            updated_at: new Date(),
+          })
+          .where('id', '=', recordId)
+          .execute();
+      }
+    }
+
+    await sendCompletionEmailIfNeeded({
+      recordId,
+      isDraft,
+      wasDraftBefore,
+    });
 
     res.json({
       id: form!.id,
       recordId: form!.record_id,
       answers: form!.record_specific_answers,
       isDraft: form!.is_draft,
+      completedAt: form!.completed_at,
       createdAt: form!.created_at,
       updatedAt: form!.updated_at,
     });
@@ -182,23 +255,53 @@ router.put(
       });
     }
 
+    const wasDraftBefore = existingForm.is_draft;
+    const completedAt = !isDraft ? (existingForm.completed_at ?? new Date()) : null;
+
     // Update form
     const form = await db
       .updateTable('patient_record_form')
       .set({
         record_specific_answers: JSON.stringify(answers) as any,
         is_draft: isDraft,
+        completed_at: completedAt,
         updated_at: new Date(),
       })
       .where('record_id', '=', recordId)
       .returningAll()
       .executeTakeFirst();
 
+    if (!isDraft) {
+      const record = await db
+        .selectFrom('record')
+        .select(['id', 'type'])
+        .where('id', '=', recordId)
+        .executeTakeFirst();
+
+      if (record?.type === 'sedation') {
+        await db
+          .updateTable('record')
+          .set({
+            status: 'completed',
+            updated_at: new Date(),
+          })
+          .where('id', '=', recordId)
+          .execute();
+      }
+    }
+
+    await sendCompletionEmailIfNeeded({
+      recordId,
+      isDraft,
+      wasDraftBefore,
+    });
+
     res.json({
       id: form!.id,
       recordId: form!.record_id,
       answers: form!.record_specific_answers,
       isDraft: form!.is_draft,
+      completedAt: form!.completed_at,
       createdAt: form!.created_at,
       updatedAt: form!.updated_at,
     });

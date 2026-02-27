@@ -2,6 +2,7 @@ import { Resend } from "resend";
 
 import { verifyEmailTemplate } from "./templates/verifyEmail";
 import { resetPasswordTemplate } from "./templates/resetPassword";
+import { patientQuestionnaireCompletedTemplate } from "./templates/patientQuestionnaireCompleted";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -65,5 +66,30 @@ export async function sendResetPasswordEmail({
   }
 
   console.log("Reset password email sent:", data);
+  return data;
+}
+
+export async function sendPatientQuestionnaireCompletedEmail({
+  email,
+  name,
+}: {
+  email: string;
+  name: string;
+}) {
+  if (!email) return;
+
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: SUBJECT("Cuestionario completado"),
+    html: patientQuestionnaireCompletedTemplate({ email, name }),
+  });
+
+  if (error) {
+    console.error("Error sending patient questionnaire completion email:", error);
+    throw error;
+  }
+
+  console.log("Patient questionnaire completion email sent:", data);
   return data;
 }
