@@ -5,6 +5,17 @@ import { resetPasswordTemplate } from "./templates/resetPassword";
 import { patientQuestionnaireCompletedTemplate } from "./templates/patientQuestionnaireCompleted";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const isEmailDebugEnabled =
+  process.env.EMAIL_DEBUG === "1" || process.env.EMAIL_DEBUG === "true";
+
+function logEmailDebug(message: string, data?: Record<string, unknown>) {
+  if (!isEmailDebugEnabled) return;
+  if (data) {
+    console.log(`[resend] ${message}`, data);
+    return;
+  }
+  console.log(`[resend] ${message}`);
+}
 
 // TODO: Update with your verified domain email
 // For now, you can use: onboarding@resend.dev (Resend's test email)
@@ -76,7 +87,16 @@ export async function sendPatientQuestionnaireCompletedEmail({
   email: string;
   name: string;
 }) {
-  if (!email) return;
+  if (!email) {
+    logEmailDebug("Skipped patient questionnaire completed email: missing recipient email");
+    return;
+  }
+
+  logEmailDebug("Attempting patient questionnaire completed email send", {
+    to: email,
+    hasApiKey: Boolean(process.env.RESEND_API_KEY),
+    from: FROM_EMAIL,
+  });
 
   const { data, error } = await resend.emails.send({
     from: FROM_EMAIL,
@@ -86,10 +106,18 @@ export async function sendPatientQuestionnaireCompletedEmail({
   });
 
   if (error) {
+    logEmailDebug("Resend API returned error for questionnaire completion email", {
+      to: email,
+      error,
+    });
     console.error("Error sending patient questionnaire completion email:", error);
     throw error;
   }
 
+  logEmailDebug("Resend API accepted questionnaire completion email", {
+    to: email,
+    response: data,
+  });
   console.log("Patient questionnaire completion email sent:", data);
   return data;
 }

@@ -12,16 +12,45 @@ import { sendPatientQuestionnaireCompletedEmail } from '../../lib/resend';
 
 const router = express.Router();
 
+const isEmailDebugEnabled =
+  process.env.EMAIL_DEBUG === '1' || process.env.EMAIL_DEBUG === 'true';
+
+function logEmailDebug(message: string, data?: Record<string, unknown>) {
+  if (!isEmailDebugEnabled) return;
+  if (data) {
+    console.log(`[patient-form-email] ${message}`, data);
+    return;
+  }
+  console.log(`[patient-form-email] ${message}`);
+}
+
 async function sendCompletionEmailIfNeeded({
   recordId,
   isDraft,
   wasDraftBefore,
+  previousCompletedAt,
 }: {
   recordId: string;
   isDraft: boolean;
   wasDraftBefore: boolean;
+  previousCompletedAt?: Date | string | null;
 }) {
-  if (isDraft || !wasDraftBefore) {
+  logEmailDebug('Evaluating completion email conditions', {
+    recordId,
+    isDraft,
+    wasDraftBefore,
+    previousCompletedAt: previousCompletedAt ? String(previousCompletedAt) : null,
+  });
+
+  const wasAlreadyCompletedWithTimestamp = !wasDraftBefore && !!previousCompletedAt;
+
+  if (isDraft || wasAlreadyCompletedWithTimestamp) {
+    logEmailDebug('Skipping completion email', {
+      recordId,
+      reason: isDraft
+        ? 'form-is-draft'
+        : 'already-completed-with-timestamp',
+    });
     return;
   }
 
@@ -37,17 +66,34 @@ async function sendCompletionEmailIfNeeded({
     .executeTakeFirst();
 
   if (!patientData?.email) {
+    logEmailDebug('Skipping completion email because patient email is missing', {
+      recordId,
+    });
     return;
   }
 
   const fullName = `${patientData.first_name} ${patientData.last_name}`.trim() || 'Paciente';
+
+  logEmailDebug('Sending completion email', {
+    recordId,
+    recipientEmail: patientData.email,
+    recipientName: fullName,
+  });
 
   try {
     await sendPatientQuestionnaireCompletedEmail({
       email: patientData.email,
       name: fullName,
     });
+    logEmailDebug('Completion email sent successfully', {
+      recordId,
+      recipientEmail: patientData.email,
+    });
   } catch (error) {
+    logEmailDebug('Completion email failed', {
+      recordId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     console.error('Error sending patient questionnaire completion email:', error);
   }
 }
@@ -146,6 +192,7 @@ router.post(
       .executeTakeFirst();
 
     const wasDraftBefore = existingForm ? existingForm.is_draft : true;
+    const previousCompletedAt = existingForm?.completed_at ?? null;
     const completedAt = !isDraft ? (existingForm?.completed_at ?? new Date()) : null;
 
     let form;
@@ -184,7 +231,8 @@ router.post(
         .where('id', '=', recordId)
         .executeTakeFirst();
 
-      if (record?.type === 'sedation') {
+      const recordType = String(record?.type ?? '');
+      if (recordType === 'sedation' || recordType === 'pre_anesthesia') {
         await db
           .updateTable('record')
           .set({
@@ -200,6 +248,7 @@ router.post(
       recordId,
       isDraft,
       wasDraftBefore,
+      previousCompletedAt,
     });
 
     res.json({
@@ -256,6 +305,7 @@ router.put(
     }
 
     const wasDraftBefore = existingForm.is_draft;
+    const previousCompletedAt = existingForm.completed_at;
     const completedAt = !isDraft ? (existingForm.completed_at ?? new Date()) : null;
 
     // Update form
@@ -278,7 +328,8 @@ router.put(
         .where('id', '=', recordId)
         .executeTakeFirst();
 
-      if (record?.type === 'sedation') {
+      const recordType = String(record?.type ?? '');
+      if (recordType === 'sedation' || recordType === 'pre_anesthesia') {
         await db
           .updateTable('record')
           .set({
@@ -294,6 +345,7 @@ router.put(
       recordId,
       isDraft,
       wasDraftBefore,
+      previousCompletedAt,
     });
 
     res.json({

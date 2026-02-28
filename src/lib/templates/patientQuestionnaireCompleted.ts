@@ -19,7 +19,7 @@ export const patientQuestionnaireCompletedTemplate = ({
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
           <tr>
             <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Visoria Medical</h1>
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Anestesiólogos Campo Alegre</h1>
             </td>
           </tr>
           <tr>
@@ -28,7 +28,7 @@ export const patientQuestionnaireCompletedTemplate = ({
               <p style="margin: 0 0 20px; color: #374151; font-size: 16px; line-height: 1.6;">Hola ${name},</p>
               <p style="margin: 0 0 20px; color: #374151; font-size: 16px; line-height: 1.6;">Confirmamos que tu cuestionario preanestésico fue enviado correctamente.</p>
               <p style="margin: 0 0 20px; color: #374151; font-size: 16px; line-height: 1.6;">Tu información ya fue registrada y el equipo médico la revisará antes de tu procedimiento.</p>
-              <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">Si necesitas actualizar algún dato, comunícate con tu clínica o con el equipo de atención.</p>
+              <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">Si tienes alguna duda comunícate con el equipo de atención.</p>
             </td>
           </tr>
           <tr>

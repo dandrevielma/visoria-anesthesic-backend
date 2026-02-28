@@ -44,12 +44,13 @@ console.log('=====================');
 
 // Middleware to fix SameSite cookies for cross-site auth
 app.use((req, res, next) => {
+  const shouldForceCrossSiteCookies = process.env.NODE_ENV === 'production';
   const originalSetHeader = res.setHeader;
   res.setHeader = function(name: string, value: any) {
-    if (name.toLowerCase() === 'set-cookie') {
+    if (name.toLowerCase() === 'set-cookie' && shouldForceCrossSiteCookies) {
       const cookies = Array.isArray(value) ? value : [value];
       const fixedCookies = cookies.map((cookie: string) => {
-        // Replace SameSite=Lax with SameSite=None for production
+        // Replace SameSite=Lax with SameSite=None only in production
         return cookie.replace(/SameSite=Lax/gi, 'SameSite=None');
       });
       return originalSetHeader.call(this, name, fixedCookies);
