@@ -13,6 +13,25 @@ import { uploadRouter } from "./uploadthing";
 import cors from "cors";
 const app = express();
 
+const defaultAllowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:5173",
+  "https://example.com",
+  "https://visoria-anesthesic-frontend-production.up.railway.app",
+  "https://visoria-anesthesic-frontend.vercel.app",
+  "https://anestesiologos.visoriaconsulting.com",
+];
+
+const envAllowedOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = Array.from(
+  new Set([...defaultAllowedOrigins, ...envAllowedOrigins]),
+);
+
 // Trust proxy MUST be set before any middleware
 app.set("trust proxy", true);
 
@@ -42,14 +61,14 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://localhost:5173",
-      "https://example.com",
-      "https://visoria-anesthesic-frontend-production.up.railway.app",
-      "https://visoria-anesthesic-frontend.vercel.app"
-    ],
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin not allowed by CORS: ${origin}`));
+    },
     credentials: true,
   }),
 );

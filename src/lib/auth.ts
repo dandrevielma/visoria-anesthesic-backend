@@ -2,6 +2,25 @@ import { betterAuth, type BetterAuthPlugin } from "better-auth";
 import { db } from "./db";
 import { sendResetPasswordEmail, sendVerifyEmail } from "./resend";
 import { openAPI } from "better-auth/plugins";
+
+const defaultTrustedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:5173",
+  "https://visoria-anesthesic-frontend.vercel.app",
+  "https://visoria-anesthesic-frontend-production.up.railway.app",
+  "https://anestesiologos.visoriaconsulting.com",
+];
+
+const envTrustedOrigins = (process.env.TRUSTED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const trustedOrigins = Array.from(
+  new Set([...defaultTrustedOrigins, ...envTrustedOrigins]),
+);
+
 export const auth = betterAuth({
   baseURL: process.env.BASE_URL!,
   database: {
@@ -61,12 +80,7 @@ export const auth = betterAuth({
   //     redirectURI: `${process.env.BASE_URL}/api/auth/callback/apple`,
   //   },
   // },
-  trustedOrigins: [
-    "localhost:3000",
-    "http://localhost:3000",
-    "https://visoria-anesthesic-frontend.vercel.app",
-    "https://visoria-anesthesic-frontend-production.up.railway.app"
-  ],
+  trustedOrigins,
   advanced: {
     useSecureCookies: process.env.NODE_ENV === "production", // Only in production
     cookieOptions: {
