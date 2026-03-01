@@ -146,6 +146,7 @@ router.get(
  */
 router.post(
   "/:recordId/medical-report",
+  authMiddleware,
   expressTryCatch(async (req: Request, res: Response) => {
     const { recordId } = req.params;
     const { content } = req.body;
@@ -167,7 +168,7 @@ router.post(
     // Check if record exists
     const record = await db
       .selectFrom("record")
-      .select("id")
+      .select(["id", "type"])
       .where("id", "=", recordId)
       .executeTakeFirst();
 
@@ -177,6 +178,8 @@ router.post(
         message: "La consulta no existe",
       });
     }
+
+    const currentUserId = (req as any).user?.id;
 
     // Check if medical report already exists
     const existingReport = await db
@@ -208,6 +211,17 @@ router.post(
         })
         .returningAll()
         .executeTakeFirst();
+    }
+
+    if ((record as any).type === "sedation" && currentUserId) {
+      await db
+        .updateTable("record")
+        .set({
+          assigned_doctor_id: currentUserId,
+          updated_at: new Date(),
+        })
+        .where("id", "=", recordId)
+        .execute();
     }
 
     res.json({
@@ -565,6 +579,7 @@ router.get(
     let query = db
       .selectFrom("record")
       .leftJoin("patient", "record.patient_id", "patient.id")
+      .leftJoin("user as assigned_doctor", "record.assigned_doctor_id", "assigned_doctor.id")
       .select([
         "record.id",
         "record.record_number",
@@ -581,6 +596,7 @@ router.get(
         "patient.last_name as patient_last_name",
         "patient.identification_number as patient_identification",
         "patient.date_of_birth as patient_date_of_birth",
+        "assigned_doctor.name as assigned_doctor_name",
       ]);
 
     if (status && typeof status === "string") {
