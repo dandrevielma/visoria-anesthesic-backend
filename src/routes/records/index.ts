@@ -364,6 +364,7 @@ router.get(
       .select([
         "doctor_evaluation.id",
         "doctor_evaluation.record_id",
+        "doctor_evaluation.doctor_id",
         "doctor_evaluation.evaluation_data",
         "doctor_evaluation.is_draft",
         "doctor_evaluation.created_at",
@@ -383,6 +384,7 @@ router.get(
     res.json({
       id: doctorEvaluation.id,
       recordId: doctorEvaluation.record_id,
+      doctorId: doctorEvaluation.doctor_id,
       answers: doctorEvaluation.evaluation_data,
       isDraft: doctorEvaluation.is_draft,
       createdAt: doctorEvaluation.created_at,
@@ -501,6 +503,7 @@ router.post(
     res.json({
       id: doctorEvaluation!.id,
       recordId: doctorEvaluation!.record_id,
+      doctorId: doctorEvaluation!.doctor_id,
       answers: doctorEvaluation!.evaluation_data,
       isDraft: doctorEvaluation!.is_draft,
       createdAt: doctorEvaluation!.created_at,

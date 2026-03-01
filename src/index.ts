@@ -4,6 +4,7 @@ import { auth } from "./lib/auth";
 import { toNodeHandler } from "better-auth/node";
 import { exampleRouter } from "./routes/example";
 import { rolesRouter } from "./routes/roles";
+import { adminUsersRouter } from "./routes/adminUsers";
 import { patientsRouter } from "./routes/patients";
 import { recordsRouter } from "./routes/records";
 import patientFormsRouter from "./routes/patientForms";
@@ -14,6 +15,7 @@ import cors from "cors";
 const app = express();
 
 const defaultAllowedOrigins = [
+  "http://localhost:8080",
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:5173",
@@ -92,6 +94,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use("/api/example", exampleRouter);
+app.use("/api/admin/users", adminUsersRouter);
 app.use("/api/roles", rolesRouter);
 app.use("/api/patients", patientsRouter);
 app.use("/api/patient-forms", patientFormsRouter); // Public patient forms (no auth)

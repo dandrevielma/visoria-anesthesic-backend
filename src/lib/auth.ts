@@ -4,6 +4,7 @@ import { sendResetPasswordEmail, sendVerifyEmail } from "./resend";
 import { openAPI } from "better-auth/plugins";
 
 const defaultTrustedOrigins = [
+  "http://localhost:8080",
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:5173",
@@ -20,6 +21,10 @@ const envTrustedOrigins = (process.env.TRUSTED_ORIGINS || "")
 const trustedOrigins = Array.from(
   new Set([...defaultTrustedOrigins, ...envTrustedOrigins]),
 );
+
+const shouldIgnoreEmailSendErrors =
+  process.env.AUTH_IGNORE_EMAIL_SEND_ERRORS === "true" ||
+  process.env.NODE_ENV !== "production";
 
 export const auth = betterAuth({
   baseURL: process.env.BASE_URL!,
@@ -54,11 +59,18 @@ export const auth = betterAuth({
         "callbackURL",
         `${process.env.WEBSITE_URL}/verify-email`
       );
-      await sendVerifyEmail({
-        email: user.email,
-        url: newUrl.toString(),
-        name: user.name,
-      });
+      try {
+        await sendVerifyEmail({
+          email: user.email,
+          url: newUrl.toString(),
+          name: user.name,
+        });
+      } catch (error) {
+        console.error("Error sending verification email during signup:", error);
+        if (!shouldIgnoreEmailSendErrors) {
+          throw error;
+        }
+      }
     },
   },
 
