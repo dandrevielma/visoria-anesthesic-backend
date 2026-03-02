@@ -118,6 +118,12 @@ router.post(
       .executeTakeFirst();
 
     if (existingUser) {
+      await db
+        .updateTable('user')
+        .set({ emailVerified: 1 })
+        .where('id', '=', existingUser.id)
+        .execute();
+
       await syncUserRole(existingUser.id, role);
 
       return res.status(200).json({
@@ -193,6 +199,12 @@ router.post(
         message: 'Usuario creado en auth pero no encontrado en base de datos',
       });
     }
+
+    await db
+      .updateTable('user')
+      .set({ emailVerified: 1 })
+      .where('id', '=', user.id)
+      .execute();
 
     await syncUserRole(user.id, role);
 
