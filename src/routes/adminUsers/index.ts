@@ -140,6 +140,7 @@ router.post(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-admin-user-create': '1',
         },
         body: JSON.stringify({
           name: normalizedName,

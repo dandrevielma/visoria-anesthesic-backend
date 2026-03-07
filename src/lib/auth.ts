@@ -59,6 +59,8 @@ export const auth = betterAuth({
         "callbackURL",
         `${process.env.WEBSITE_URL}/verify-email`
       );
+      const adminCreatedUser =
+        request?.headers?.get?.("x-admin-user-create") === "1";
       try {
         await sendVerifyEmail({
           email: user.email,
@@ -67,7 +69,7 @@ export const auth = betterAuth({
         });
       } catch (error) {
         console.error("Error sending verification email during signup:", error);
-        if (!shouldIgnoreEmailSendErrors) {
+        if (!shouldIgnoreEmailSendErrors && !adminCreatedUser) {
           throw error;
         }
       }
