@@ -411,13 +411,22 @@ router.get(
 /**
  * POST /api/records/:recordId/doctor-evaluation
  * Create or update doctor evaluation for a record
- * PUBLIC ROUTE - No authentication required (for now, could be protected later)
+ * AUTH ROUTE - Requires authenticated user
  */
 router.post(
   "/:recordId/doctor-evaluation",
+  authMiddleware,
   expressTryCatch(async (req: Request, res: Response) => {
     const { recordId } = req.params;
     const { answers, isDraft } = req.body;
+    const currentUserId = (req as any).user?.id;
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        error: "Unauthorized",
+        message: "Debe iniciar sesión para guardar la evaluación médica",
+      });
+    }
 
     if (!recordId) {
       return res.status(400).json({
@@ -450,7 +459,7 @@ router.post(
     // Check if doctor evaluation already exists
     const existingEvaluation = await db
       .selectFrom("doctor_evaluation")
-      .select("id")
+      .select(["id", "doctor_id"])
       .where("record_id", "=", recordId)
       .executeTakeFirst();
 
@@ -468,40 +477,21 @@ router.post(
         .where("record_id", "=", recordId)
         .returningAll()
         .executeTakeFirst();
-    } else {
-      // Create new evaluation
-      // Use assigned_doctor_id from record, or get from session, or get first available doctor
-      let doctorId = record.assigned_doctor_id || (req as any).user?.id;
-      
-      if (!doctorId) {
-        // Get first available doctor as fallback (via user_role table)
-        const firstDoctor = await db
-          .selectFrom("user_role")
-          .select("user_id")
-          .where("role", "=", "doctor")
-          .limit(1)
-          .executeTakeFirst();
 
-        if (!firstDoctor) {
-          // If no doctor role exists, just get any user
-          const anyUser = await db
-            .selectFrom("user")
-            .select("id")
-            .limit(1)
-            .executeTakeFirst();
-
-          if (!anyUser) {
-            return res.status(500).json({
-              error: "No users found",
-              message: "No se pudo asignar un médico para la evaluación",
-            });
-          }
-          doctorId = anyUser.id;
-        } else {
-          doctorId = firstDoctor.user_id;
-        }
+      if (!record.assigned_doctor_id) {
+        await db
+          .updateTable("record")
+          .set({
+            assigned_doctor_id: existingEvaluation.doctor_id,
+            updated_at: new Date(),
+          })
+          .where("id", "=", recordId)
+          .execute();
       }
-      
+    } else {
+      // Create new evaluation with the authenticated user as author
+      const doctorId = currentUserId;
+
       doctorEvaluation = await db
         .insertInto("doctor_evaluation")
         .values({
@@ -512,6 +502,17 @@ router.post(
         })
         .returningAll()
         .executeTakeFirst();
+
+      if (!record.assigned_doctor_id) {
+        await db
+          .updateTable("record")
+          .set({
+            assigned_doctor_id: doctorId,
+            updated_at: new Date(),
+          })
+          .where("id", "=", recordId)
+          .execute();
+      }
     }
 
     res.json({
