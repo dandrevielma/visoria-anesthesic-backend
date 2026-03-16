@@ -19,6 +19,7 @@ describe("Records API", () => {
   let testPatientId: string;
   let testRecordId: string;
   let testUserId: string;
+  const testPatientIdentification = `records-test-${Date.now()}`;
 
   beforeAll(async () => {
     app = createTestApp();
@@ -53,7 +54,7 @@ describe("Records API", () => {
     const patient = await db
       .insertInto("patient")
       .values({
-        identification_number: "12345678",
+        identification_number: testPatientIdentification,
         first_name: "Test",
         last_name: "Patient",
       })
@@ -279,6 +280,115 @@ describe("Records API", () => {
         .expect(404);
 
       expect(response.body).toHaveProperty("error");
+    });
+  });
+
+  describe("POST /api/records/:recordId/doctor-evaluation", () => {
+    it("should keep the consultation unassigned while the evaluation is still a draft", async () => {
+      const createResponse = await request(app)
+        .post("/api/records")
+        .send({
+          patient_id: testPatientId,
+          type: "pre_anesthesia",
+        })
+        .expect(201);
+
+      const recordId = createResponse.body.id;
+
+      const saveDraftResponse = await request(app)
+        .post(`/api/records/${recordId}/doctor-evaluation`)
+        .send({
+          answers: {
+            medico_anestesiologo: "Test User",
+            fecha_evaluacion: "2026-03-15",
+          },
+          isDraft: true,
+        })
+        .expect(200);
+
+      expect(saveDraftResponse.body.isDraft).toBe(true);
+
+      const savedRecord = await db
+        .selectFrom("record")
+        .select(["id", "assigned_doctor_id"])
+        .where("id", "=", recordId)
+        .executeTakeFirst();
+
+      expect(savedRecord?.assigned_doctor_id).toBeNull();
+
+      await db.deleteFrom("record").where("id", "=", recordId).execute();
+    });
+
+    it("should assign the consultation to the doctor who completes the evaluation", async () => {
+      const otherUserId = `other-doctor-${Date.now()}`;
+
+      await db
+        .insertInto("user")
+        .values({
+          id: otherUserId,
+          email: `${otherUserId}@example.com`,
+          emailVerified: 0,
+          name: "Other Doctor",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .execute();
+
+      const createResponse = await request(app)
+        .post("/api/records")
+        .send({
+          patient_id: testPatientId,
+          type: "pre_anesthesia",
+        })
+        .expect(201);
+
+      const recordId = createResponse.body.id;
+
+      await db
+        .insertInto("doctor_evaluation")
+        .values({
+          record_id: recordId,
+          doctor_id: otherUserId,
+          evaluation_data: JSON.stringify({
+            medico_anestesiologo: "Other Doctor",
+            fecha_evaluacion: "2026-03-14",
+          }) as any,
+          is_draft: true,
+        })
+        .execute();
+
+      const completeResponse = await request(app)
+        .post(`/api/records/${recordId}/doctor-evaluation`)
+        .send({
+          answers: {
+            medico_anestesiologo: "Test User",
+            fecha_evaluacion: "2026-03-15",
+          },
+          isDraft: false,
+        })
+        .expect(200);
+
+      expect(completeResponse.body.isDraft).toBe(false);
+      expect(completeResponse.body.doctorId).toBe(testUserId);
+
+      const savedRecord = await db
+        .selectFrom("record")
+        .select(["assigned_doctor_id"])
+        .where("id", "=", recordId)
+        .executeTakeFirst();
+
+      const savedEvaluation = await db
+        .selectFrom("doctor_evaluation")
+        .select(["doctor_id", "is_draft"])
+        .where("record_id", "=", recordId)
+        .executeTakeFirst();
+
+      expect(savedRecord?.assigned_doctor_id).toBe(testUserId);
+      expect(savedEvaluation?.doctor_id).toBe(testUserId);
+      expect(savedEvaluation?.is_draft).toBe(false);
+
+      await db.deleteFrom("record").where("id", "=", recordId).execute();
+      await db.deleteFrom("user").where("id", "=", otherUserId).execute();
     });
   });
 

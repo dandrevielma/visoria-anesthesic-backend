@@ -420,6 +420,7 @@ router.post(
     const { recordId } = req.params;
     const { answers, isDraft } = req.body;
     const currentUserId = (req as any).user?.id;
+    const nextIsDraft = isDraft !== undefined ? Boolean(isDraft) : true;
 
     if (!currentUserId) {
       return res.status(401).json({
@@ -459,30 +460,47 @@ router.post(
     // Check if doctor evaluation already exists
     const existingEvaluation = await db
       .selectFrom("doctor_evaluation")
-      .select(["id", "doctor_id"])
+      .select(["id", "doctor_id", "is_draft"])
       .where("record_id", "=", recordId)
       .executeTakeFirst();
+
+    if (
+      existingEvaluation &&
+      !existingEvaluation.is_draft &&
+      existingEvaluation.doctor_id !== currentUserId
+    ) {
+      return res.status(403).json({
+        error: "Forbidden",
+        message:
+          "La evaluación completada solo puede ser modificada por el médico que la completó",
+      });
+    }
 
     let doctorEvaluation;
 
     if (existingEvaluation) {
       // Update existing evaluation
+      const evaluationDoctorId = nextIsDraft
+        ? existingEvaluation.doctor_id
+        : currentUserId;
+
       doctorEvaluation = await db
         .updateTable("doctor_evaluation")
         .set({
+          doctor_id: evaluationDoctorId,
           evaluation_data: JSON.stringify(answers) as any,
-          is_draft: isDraft !== undefined ? isDraft : true,
+          is_draft: nextIsDraft,
           updated_at: new Date(),
         })
         .where("record_id", "=", recordId)
         .returningAll()
         .executeTakeFirst();
 
-      if (!record.assigned_doctor_id) {
+      if (!nextIsDraft) {
         await db
           .updateTable("record")
           .set({
-            assigned_doctor_id: existingEvaluation.doctor_id,
+            assigned_doctor_id: currentUserId,
             updated_at: new Date(),
           })
           .where("id", "=", recordId)
@@ -498,12 +516,12 @@ router.post(
           record_id: recordId,
           doctor_id: doctorId,
           evaluation_data: JSON.stringify(answers) as any,
-          is_draft: isDraft !== undefined ? isDraft : true,
+          is_draft: nextIsDraft,
         })
         .returningAll()
         .executeTakeFirst();
 
-      if (!record.assigned_doctor_id) {
+      if (!nextIsDraft) {
         await db
           .updateTable("record")
           .set({
