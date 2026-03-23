@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { sql } from "kysely";
 import { db } from "@/lib/db";
 import { expressTryCatch } from "@/middleware/globalTryCatch";
 import { authMiddleware } from "@/middleware/authMiddleware";
@@ -751,36 +752,43 @@ router.post(
       return res.status(404).json({ error: "Patient not found" });
     }
 
-    // Generate unique record number (incremental)
-    const count = await db
-      .selectFrom("record")
-      .select(db.fn.count<number>("id").as("count"))
-      .executeTakeFirstOrThrow();
-    
-    const recordNumber = String(Number(count.count) + 1);
-
     // Generate unique token for patient form access
     const formToken = crypto.randomBytes(32).toString("hex");
 
     // Get user from session (authMiddleware should add this)
     const createdBy = (req as any).user?.id || "system";
 
-    // Create record
-    const newRecord = await db
-      .insertInto("record")
-      .values({
-        patient_id,
-        type,
-        status: "pending",
-        record_number: recordNumber,
-        form_link_token: formToken,
-        assigned_doctor_id: assigned_doctor_id || null,
-        scheduled_date: scheduled_date || null,
-        notes: notes || null,
-        created_by: createdBy,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    // Create record with a locked, max-based incremental number to avoid
+    // duplicates after deletions or concurrent inserts.
+    const newRecord = await db.transaction().execute(async (trx) => {
+      await sql`LOCK TABLE record IN EXCLUSIVE MODE`.execute(trx);
+
+      const nextRecordNumberResult = await sql<{ next_record_number: number }>`
+        SELECT COALESCE(MAX(record_number::integer), 0) + 1 AS next_record_number
+        FROM record
+        WHERE record_number ~ '^[0-9]+$'
+      `.execute(trx);
+
+      const recordNumber = String(
+        nextRecordNumberResult.rows[0]?.next_record_number ?? 1
+      );
+
+      return trx
+        .insertInto("record")
+        .values({
+          patient_id,
+          type,
+          status: "pending",
+          record_number: recordNumber,
+          form_link_token: formToken,
+          assigned_doctor_id: assigned_doctor_id || null,
+          scheduled_date: scheduled_date || null,
+          notes: notes || null,
+          created_by: createdBy,
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow();
+    });
 
     res.status(201).json({
       ...newRecord,
